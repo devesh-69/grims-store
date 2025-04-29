@@ -12,14 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 500]);
   const [filtersVisible, setFiltersVisible] = useState(false);
 
   // Extract categories from products
@@ -36,18 +34,13 @@ const ProductsPage = () => {
     // Category filter
     const matchesCategory = selectedCategory === "" || product.category === selectedCategory;
 
-    // Price filter
-    const matchesPriceRange = 
-      product.price >= priceRange[0] && product.price <= priceRange[1];
-
-    return matchesSearchTerm && matchesCategory && matchesPriceRange;
+    return matchesSearchTerm && matchesCategory;
   });
 
   // Reset all filters
   const resetFilters = () => {
     setSearchTerm("");
     setSelectedCategory("");
-    setPriceRange([0, 500]);
   };
 
   return (
@@ -105,24 +98,6 @@ const ProductsPage = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div>
-                  <Label>Price Range</Label>
-                  <div className="pt-4 px-2">
-                    <Slider
-                      defaultValue={priceRange}
-                      min={0}
-                      max={500}
-                      step={10}
-                      value={priceRange}
-                      onValueChange={(value) => setPriceRange(value)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between mt-2 text-sm">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
-                  </div>
                 </div>
               </div>
             </div>

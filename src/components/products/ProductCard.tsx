@@ -58,15 +58,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
         <p className="text-muted-foreground text-sm line-clamp-2 h-10">{product.description}</p>
       </CardContent>
-      <CardFooter className="flex justify-between items-center border-t border-border pt-4">
-        <div>
-          <span className="text-xl font-semibold text-primary">${product.price.toFixed(2)}</span>
-          {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through ml-2">
-              ${product.originalPrice.toFixed(2)}
-            </span>
-          )}
-        </div>
+      <CardFooter className="flex justify-center border-t border-border pt-4">
         <Link to={`/products/${product.id}`}>
           <Button size="sm">View Details</Button>
         </Link>

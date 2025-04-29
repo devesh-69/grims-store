@@ -3,7 +3,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price?: number; // Making price optional
   originalPrice?: number;
   image: string;
   category: string;
