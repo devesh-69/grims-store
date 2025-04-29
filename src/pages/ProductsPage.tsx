@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/products/ProductCard";
-import { products } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,15 +12,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProducts, fetchCategories } from "@/api/products";
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [filtersVisible, setFiltersVisible] = useState(false);
 
-  // Extract categories from products
-  const categories = Array.from(new Set(products.map((product) => product.category)));
+  const { data: products = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts
+  });
+
+  const { data: categories = [], isLoading: loadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories
+  });
 
   // Filter products
   const filteredProducts = products.filter((product) => {
@@ -29,10 +37,10 @@ const ProductsPage = () => {
     const matchesSearchTerm = product.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase()) || 
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      product.short_description.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Category filter
-    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || product.category_id === selectedCategory;
 
     return matchesSearchTerm && matchesCategory;
   });
@@ -91,11 +99,15 @@ const ProductsPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
+                      {loadingCategories ? (
+                        <SelectItem value="loading" disabled>Loading...</SelectItem>
+                      ) : (
+                        categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -119,10 +131,28 @@ const ProductsPage = () => {
                 </div>
               </div>
 
-              {filteredProducts.length > 0 ? (
+              {loadingProducts ? (
+                <div className="flex justify-center items-center py-24">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard 
+                      key={product.id} 
+                      product={{
+                        id: product.id,
+                        name: product.name,
+                        description: product.short_description,
+                        price: product.price,
+                        originalPrice: product.original_price,
+                        image: product.image_url || "/placeholder.svg",
+                        category: product.category?.name || "",
+                        isNew: product.is_new || false,
+                        rating: product.rating || 0,
+                        reviewCount: product.review_count || 0,
+                      }} 
+                    />
                   ))}
                 </div>
               ) : (
