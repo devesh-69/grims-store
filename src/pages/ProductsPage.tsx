@@ -17,7 +17,7 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [filtersVisible, setFiltersVisible] = useState(false);
 
   // Extract categories from products
@@ -32,7 +32,7 @@ const ProductsPage = () => {
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Category filter
-    const matchesCategory = selectedCategory === "" || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
 
     return matchesSearchTerm && matchesCategory;
   });
@@ -40,7 +40,7 @@ const ProductsPage = () => {
   // Reset all filters
   const resetFilters = () => {
     setSearchTerm("");
-    setSelectedCategory("");
+    setSelectedCategory("all");
   };
 
   return (
@@ -90,7 +90,7 @@ const ProductsPage = () => {
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
+                      <SelectItem value="all">All Categories</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
