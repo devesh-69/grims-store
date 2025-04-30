@@ -17,6 +17,7 @@ import AdminProductsPage from "./pages/AdminProductsPage";
 import AdminAddProductPage from "./pages/AdminAddProductPage";
 import AdminEditProductPage from "./pages/AdminEditProductPage";
 import AdminBlogPostsPage from "./pages/AdminBlogPostsPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,11 @@ const App = () => (
             <Route path="/admin/blog-posts" element={
               <ProtectedRoute>
                 <AdminBlogPostsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute>
+                <AdminUsersPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

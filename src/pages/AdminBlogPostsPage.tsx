@@ -89,10 +89,10 @@ const AdminBlogPostsPage = () => {
             onCancel={handleCancelEdit}
           />
         ) : (
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-secondary/50 rounded-lg shadow">
             {blogs.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
-                <FileText className="h-12 w-12 mx-auto text-gray-400" />
+              <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
                 <h2 className="mt-4 text-xl font-semibold">No blog posts yet</h2>
                 <p className="text-muted-foreground mt-2">
                   Create your first blog post to get started
