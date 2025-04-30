@@ -58,6 +58,18 @@ export function BlogsTable({ blogs, onEdit, onDelete, onView }: BlogsTableProps)
     }
   };
 
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -163,9 +175,9 @@ export function BlogsTable({ blogs, onEdit, onDelete, onView }: BlogsTableProps)
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
+              <PaginationPrevious 
+                onClick={handlePrevious} 
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""} 
               />
             </PaginationItem>
             
@@ -181,9 +193,9 @@ export function BlogsTable({ blogs, onEdit, onDelete, onView }: BlogsTableProps)
             ))}
             
             <PaginationItem>
-              <PaginationNext
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
+              <PaginationNext 
+                onClick={handleNext}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
           </PaginationContent>

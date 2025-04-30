@@ -14,4 +14,16 @@ export interface Blog {
   date: string;
   author: Author;
   category?: string;
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    canonicalUrl?: string;
+    keywords?: string;
+  };
+  socialPreview?: {
+    ogTitle?: string;
+    ogDescription?: string;
+    twitterTitle?: string;
+    twitterDescription?: string;
+  };
 }
