@@ -16,6 +16,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminProductsPage from "./pages/AdminProductsPage";
 import AdminAddProductPage from "./pages/AdminAddProductPage";
 import AdminEditProductPage from "./pages/AdminEditProductPage";
+import AdminBlogPostsPage from "./pages/AdminBlogPostsPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,11 @@ const App = () => (
             <Route path="/admin/products/edit/:id" element={
               <ProtectedRoute>
                 <AdminEditProductPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/blog-posts" element={
+              <ProtectedRoute>
+                <AdminBlogPostsPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
