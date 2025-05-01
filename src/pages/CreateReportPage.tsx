@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { useCreateReportTemplate } from "@/hooks/useReports";
-import { ReportTemplate } from "@/types/report";
+import { ReportTemplate, ChartType } from "@/types/report";
 import { toast } from "sonner";
 
 const CreateReportPage = () => {
@@ -18,7 +19,7 @@ const CreateReportPage = () => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    chart_type: "line",
+    chart_type: "line" as ChartType,
     chart_config: {
       title: "",
       xAxisLabel: "",
@@ -74,7 +75,7 @@ const CreateReportPage = () => {
     }));
   };
 
-  const handleSelectChange = (value: string) => {
+  const handleSelectChange = (value: ChartType) => {
     setFormData(prev => ({
       ...prev,
       chart_type: value,
@@ -113,7 +114,7 @@ const CreateReportPage = () => {
                 </div>
                 <div>
                   <Label htmlFor="chart_type">Chart Type</Label>
-                  <Select onValueChange={handleSelectChange}>
+                  <Select onValueChange={handleSelectChange as (value: string) => void}>
                     <SelectTrigger id="chart_type">
                       <SelectValue placeholder="Select a chart type" />
                     </SelectTrigger>
