@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alert_rules: {
+        Row: {
+          channels: Json
+          condition: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          metric_name: string
+          name: string
+          recipients: Json
+          threshold: number
+          updated_at: string
+        }
+        Insert: {
+          channels?: Json
+          condition: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          metric_name: string
+          name: string
+          recipients?: Json
+          threshold: number
+          updated_at?: string
+        }
+        Update: {
+          channels?: Json
+          condition?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          metric_name?: string
+          name?: string
+          recipients?: Json
+          threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -206,6 +254,176 @@ export type Database = {
         }
         Relationships: []
       }
+      report_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          parent_id: string | null
+          template_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          template_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          template_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "report_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_comments_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_exports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          downloaded_count: number | null
+          file_path: string
+          format: string
+          id: string
+          scheduled_id: string | null
+          size_bytes: number | null
+          template_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          downloaded_count?: number | null
+          file_path: string
+          format: string
+          id?: string
+          scheduled_id?: string | null
+          size_bytes?: number | null
+          template_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          downloaded_count?: number | null
+          file_path?: string
+          format?: string
+          id?: string
+          scheduled_id?: string | null
+          size_bytes?: number | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_exports_scheduled_id_fkey"
+            columns: ["scheduled_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_exports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          share_token: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          share_token: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          share_token?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_shares_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_templates: {
+        Row: {
+          chart_config: Json
+          chart_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          sql_query: string
+          updated_at: string
+        }
+        Insert: {
+          chart_config?: Json
+          chart_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          sql_query: string
+          updated_at?: string
+        }
+        Update: {
+          chart_config?: Json
+          chart_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          sql_query?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       saved_segments: {
         Row: {
           created_at: string
@@ -236,6 +454,62 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_reports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          format: string[]
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          recipients: Json
+          schedule: string
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          format?: string[]
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          recipients?: Json
+          schedule: string
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          format?: string[]
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          recipients?: Json
+          schedule?: string
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -262,10 +536,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_cohorts: {
+        Row: {
+          avg_spend: number | null
+          cohort_month: string | null
+          total_spend: number | null
+          total_users: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      get_user_kpis: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          metric: string
+          value: number
+          change_percentage: number
+          period: string
+        }[]
+      }
     }
     Enums: {
       user_role: "admin" | "moderator" | "user"

@@ -18,6 +18,10 @@ import AdminAddProductPage from "./pages/AdminAddProductPage";
 import AdminEditProductPage from "./pages/AdminEditProductPage";
 import AdminBlogPostsPage from "./pages/AdminBlogPostsPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminReportsPage from "./pages/AdminReportsPage";
+import ReportDetailsPage from "./pages/ReportDetailsPage";
+import CreateReportPage from "./pages/CreateReportPage";
+import ScheduledReportsPage from "./pages/ScheduledReportsPage";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +66,26 @@ const App = () => (
             <Route path="/admin/users" element={
               <ProtectedRoute>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute>
+                <AdminReportsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports/:id" element={
+              <ProtectedRoute>
+                <ReportDetailsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports/create" element={
+              <ProtectedRoute>
+                <CreateReportPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/scheduled-reports" element={
+              <ProtectedRoute>
+                <ScheduledReportsPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
