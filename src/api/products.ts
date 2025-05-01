@@ -79,7 +79,7 @@ export const fetchFeaturedProducts = async (): Promise<Product[]> => {
   }
 };
 
-export const fetchProduct = async (id: string): Promise<Product | null> => {
+export const fetchProductById = async (id: string): Promise<Product | null> => {
   try {
     const { data, error } = await supabase
       .from("products")
@@ -100,6 +100,8 @@ export const fetchProduct = async (id: string): Promise<Product | null> => {
     return null;
   }
 };
+
+export const fetchProduct = fetchProductById;
 
 export const createProduct = async (productData: ProductFormData): Promise<Product | null> => {
   try {
