@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProductOrderUpdate } from "@/types/product";
@@ -45,7 +44,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
         *,
         category: categories(id, name)
       `)
-      .order("display_order", { ascending: true, nullsLast: true });
+      .order("display_order", { ascending: true });
 
     if (error) {
       throw error;
@@ -67,7 +66,7 @@ export const fetchFeaturedProducts = async (): Promise<Product[]> => {
         category: categories(id, name)
       `)
       .eq("is_featured", true)
-      .order("display_order", { ascending: true, nullsLast: true });
+      .order("display_order", { ascending: true });
 
     if (error) {
       throw error;
@@ -108,13 +107,13 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
     if (!userData.user) throw new Error("User not authenticated");
 
     // Get the highest display_order value to ensure new products are added at the end
-    const { data: lastProduct, error: orderError } = await supabase
+    const { data: products } = await supabase
       .from("products")
       .select("display_order")
       .order("display_order", { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
+    const lastProduct = products && products.length > 0 ? products[0] : null;
     const newDisplayOrder = lastProduct?.display_order ? lastProduct.display_order + 1 : 1;
 
     const { data, error } = await supabase

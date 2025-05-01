@@ -12,6 +12,7 @@ export interface Product {
   reviewCount: number;
   affiliateUrl?: string;
   isFeatured?: boolean;
+  displayOrder?: number; // Adding display order property
 }
 
 export interface ProductOrderUpdate {
