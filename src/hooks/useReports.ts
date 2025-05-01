@@ -220,15 +220,19 @@ export const useReportComments = (templateId?: string) => {
       
       // Structure comments as a tree with proper type handling
       const comments = data.map(comment => {
-        // Safety check for profiles data
-        const userProfile = comment.profiles || {};
+        // Type-safe profile data extraction
+        const profile = comment.profiles as { 
+          first_name?: string; 
+          last_name?: string; 
+          avatar_url?: string; 
+        } | null;
         
         return {
           ...comment,
           user: {
-            first_name: typeof userProfile.first_name === 'string' ? userProfile.first_name : undefined,
-            last_name: typeof userProfile.last_name === 'string' ? userProfile.last_name : undefined,
-            avatar_url: typeof userProfile.avatar_url === 'string' ? userProfile.avatar_url : undefined
+            first_name: profile?.first_name,
+            last_name: profile?.last_name,
+            avatar_url: profile?.avatar_url
           },
           replies: []
         };
