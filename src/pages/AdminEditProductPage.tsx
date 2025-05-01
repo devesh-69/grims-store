@@ -28,13 +28,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const AdminEditProductPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [formData, setFormData] = useState<ProductFormData>({
+  const [formData, setFormData] = useState<Omit<ProductFormData, 'price' | 'original_price'>>({
     name: "",
     category_id: "",
     short_description: "",
     detailed_description: "",
-    price: undefined,
-    original_price: undefined,
     image_url: "",
     is_featured: false,
   });
@@ -63,19 +61,17 @@ const AdminEditProductPage = () => {
         category_id: product.category_id,
         short_description: product.short_description,
         detailed_description: product.detailed_description || "",
-        price: product.price,
-        original_price: product.original_price,
         image_url: product.image_url || "",
         is_featured: product.is_featured || false,
       });
     }
   }, [product]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    setFormData({
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | React.ChangeEvent<HTMLTextAreaElement>>) => {
+    const { name, value } = e.target;
+     setFormData({
       ...formData,
-      [name]: type === 'number' ? (value ? parseFloat(value) : undefined) : value
+      [name]: value
     });
   };
 
@@ -236,35 +232,7 @@ const AdminEditProductPage = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Price ($)</Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.price || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="original_price">Original Price ($)</Label>
-                    <Input
-                      id="original_price"
-                      name="original_price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.original_price || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
+                {/* Removed Price and Original Price fields */}
 
                 <div className="space-y-2">
                   <Label htmlFor="image">Product Image</Label>

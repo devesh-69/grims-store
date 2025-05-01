@@ -7,8 +7,6 @@ export interface ProductFormData {
   category_id: string;
   short_description: string;
   detailed_description?: string;
-  price?: number;
-  original_price?: number;
   image_url?: string;
   is_featured?: boolean;
 }
@@ -23,8 +21,6 @@ export interface Product {
   };
   short_description: string;
   detailed_description?: string;
-  price?: number;
-  original_price?: number;
   image_url?: string;
   is_featured?: boolean;
   is_new?: boolean;
@@ -40,10 +36,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from("products")
-      .select(`
-        *,
-        category: categories(id, name)
-      `)
+      .select("id, name, category_id, short_description, detailed_description, image_url, is_featured, is_new, rating, review_count, created_at, updated_at, created_by, display_order, category: categories(id, name)")
       .order("display_order", { ascending: true });
 
     if (error) {
@@ -61,10 +54,7 @@ export const fetchFeaturedProducts = async (): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from("products")
-      .select(`
-        *,
-        category: categories(id, name)
-      `)
+      .select("id, name, category_id, short_description, detailed_description, image_url, is_featured, is_new, rating, review_count, created_at, updated_at, created_by, display_order, category: categories(id, name)")
       .eq("is_featured", true)
       .order("display_order", { ascending: true });
 
@@ -83,10 +73,7 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
   try {
     const { data, error } = await supabase
       .from("products")
-      .select(`
-        *,
-        category: categories(id, name)
-      `)
+      .select("id, name, category_id, short_description, detailed_description, image_url, is_featured, is_new, rating, review_count, created_at, updated_at, created_by, display_order, category: categories(id, name)")
       .eq("id", id)
       .single();
 
@@ -118,10 +105,13 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
     const lastProduct = products && products.length > 0 ? products[0] : null;
     const newDisplayOrder = lastProduct?.display_order ? lastProduct.display_order + 1 : 1;
 
+    // Exclude price fields before inserting
+    const { price, original_price, ...dataToInsert } = productData;
+
     const { data, error } = await supabase
       .from("products")
       .insert({
-        ...productData,
+        ...dataToInsert,
         created_by: userData.user.id,
         display_order: newDisplayOrder
       })
@@ -142,9 +132,12 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
 
 export const updateProduct = async (id: string, productData: Partial<ProductFormData>): Promise<Product | null> => {
   try {
+     // Exclude price fields before updating
+    const { price, original_price, ...dataToUpdate } = productData;
+
     const { data, error } = await supabase
       .from("products")
-      .update(productData)
+      .update(dataToUpdate)
       .eq("id", id)
       .select()
       .single();

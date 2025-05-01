@@ -28,7 +28,12 @@ const LoginPage = () => {
 
   // Redirect if already logged in
   if (user) {
-    return <Navigate to="/" />;
+    // Assuming user object has an 'isAdmin' property
+    if (user.isAdmin) {
+      return <Navigate to="/admin/dashboard" />;
+    } else {
+      return <Navigate to="/" />;
+    }
   }
 
   return (

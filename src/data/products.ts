@@ -35,7 +35,7 @@ export const products: Product[] = [
   },
   {
     id: "p4",
-    name: "4K Ultra HD Monitor 32\"",
+    name: "4K Ultra HD Monitor 32",
     description: "Experience stunning visuals with this 32-inch 4K monitor featuring HDR support and gaming-optimized refresh rates.",
     image: "https://images.unsplash.com/photo-1616763355548-1b606f439f86?auto=format&q=75&fit=crop&w=600",
     category: "Monitors",

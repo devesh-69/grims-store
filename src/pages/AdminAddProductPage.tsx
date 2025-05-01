@@ -27,13 +27,11 @@ import { createProduct, fetchCategories, uploadProductImage, ProductFormData } f
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminAddProductPage = () => {
-  const [formData, setFormData] = useState<ProductFormData>({
+  const [formData, setFormData] = useState<Omit<ProductFormData, 'price' | 'original_price'>>({
     name: "",
     category_id: "",
     short_description: "",
     detailed_description: "",
-    price: undefined,
-    original_price: undefined,
     image_url: "",
     is_featured: false,
   });
@@ -49,10 +47,10 @@ const AdminAddProductPage = () => {
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'number' ? (value ? parseFloat(value) : undefined) : value
+      [name]: value
     });
   };
 
@@ -196,35 +194,7 @@ const AdminAddProductPage = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Price ($)</Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.price || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="original_price">Original Price ($)</Label>
-                    <Input
-                      id="original_price"
-                      name="original_price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.original_price || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
+                {/* Removed Price and Original Price fields */}
 
                 <div className="space-y-2">
                   <Label htmlFor="image">Product Image</Label>

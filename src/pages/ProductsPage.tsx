@@ -159,8 +159,7 @@ const ProductsPage = () => {
                         id: product.id,
                         name: product.name,
                         description: product.short_description,
-                        price: product.price,
-                        originalPrice: product.original_price,
+                        
                         image: product.image_url || "/placeholder.svg",
                         category: product.category?.name || "",
                         isNew: product.is_new || false,
