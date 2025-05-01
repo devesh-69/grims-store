@@ -20,9 +20,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
             alt={product.name}
             className="w-full h-48 object-cover transition-transform hover:scale-105"
           />
-          {product.isNew && (
-            <Badge className="absolute top-2 right-2 bg-primary text-white">New</Badge>
-          )}
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            {product.isNew && (
+              <Badge className="bg-primary text-white">New</Badge>
+            )}
+            {product.isFeatured && (
+              <Badge className="bg-orange-500 text-white">Featured</Badge>
+            )}
+          </div>
         </Link>
       </CardHeader>
       <CardContent className="pt-4">

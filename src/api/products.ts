@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ProductOrderUpdate } from "@/types/product";
 
 export interface ProductFormData {
   name: string;
@@ -33,6 +34,7 @@ export interface Product {
   created_at: string;
   updated_at: string;
   created_by: string;
+  display_order?: number;
 }
 
 export const fetchProducts = async (): Promise<Product[]> => {
@@ -43,7 +45,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
         *,
         category: categories(id, name)
       `)
-      .order("created_at", { ascending: false });
+      .order("display_order", { ascending: true, nullsLast: true });
 
     if (error) {
       throw error;
@@ -65,7 +67,7 @@ export const fetchFeaturedProducts = async (): Promise<Product[]> => {
         category: categories(id, name)
       `)
       .eq("is_featured", true)
-      .order("created_at", { ascending: false });
+      .order("display_order", { ascending: true, nullsLast: true });
 
     if (error) {
       throw error;
@@ -105,11 +107,22 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) throw new Error("User not authenticated");
 
+    // Get the highest display_order value to ensure new products are added at the end
+    const { data: lastProduct, error: orderError } = await supabase
+      .from("products")
+      .select("display_order")
+      .order("display_order", { ascending: false })
+      .limit(1)
+      .single();
+
+    const newDisplayOrder = lastProduct?.display_order ? lastProduct.display_order + 1 : 1;
+
     const { data, error } = await supabase
       .from("products")
       .insert({
         ...productData,
-        created_by: userData.user.id
+        created_by: userData.user.id,
+        display_order: newDisplayOrder
       })
       .select()
       .single();
@@ -126,7 +139,7 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
   }
 };
 
-export const updateProduct = async (id: string, productData: ProductFormData): Promise<Product | null> => {
+export const updateProduct = async (id: string, productData: Partial<ProductFormData>): Promise<Product | null> => {
   try {
     const { data, error } = await supabase
       .from("products")
@@ -144,6 +157,25 @@ export const updateProduct = async (id: string, productData: ProductFormData): P
   } catch (error: any) {
     toast.error(`Error updating product: ${error.message}`);
     return null;
+  }
+};
+
+export const updateProductOrder = async (updates: ProductOrderUpdate[]): Promise<boolean> => {
+  try {
+    // We'll use a transaction to update all products at once
+    const updatePromises = updates.map(update => 
+      supabase
+        .from("products")
+        .update({ display_order: update.display_order })
+        .eq("id", update.id)
+    );
+    
+    await Promise.all(updatePromises);
+    
+    return true;
+  } catch (error: any) {
+    toast.error(`Error updating product order: ${error.message}`);
+    return false;
   }
 };
 

@@ -5,11 +5,17 @@ import { ArrowRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/products/ProductCard";
 import BlogCard from "@/components/blog/BlogCard";
-import { products } from "@/data/products";
+import { useQuery } from "@tanstack/react-query";
+import { fetchFeaturedProducts } from "@/api/products";
 import { blogs } from "@/data/blogs";
+import { Loader2 } from "lucide-react";
 
 const HomePage = () => {
-  const featuredProducts = products.slice(0, 3);
+  const { data: featuredProducts = [], isLoading } = useQuery({
+    queryKey: ['featured-products'],
+    queryFn: fetchFeaturedProducts
+  });
+  
   const latestBlogs = blogs.slice(0, 3);
 
   return (
@@ -49,11 +55,40 @@ const HomePage = () => {
               View All <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          
+          {isLoading ? (
+            <div className="flex justify-center items-center py-24">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    description: product.short_description,
+                    price: product.price,
+                    originalPrice: product.original_price,
+                    image: product.image_url || "/placeholder.svg",
+                    category: product.category?.name || "",
+                    isNew: product.is_new || false,
+                    rating: product.rating || 0,
+                    reviewCount: product.review_count || 0,
+                    isFeatured: true,
+                  }} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 border border-dashed border-border rounded-lg">
+              <h3 className="text-xl font-medium mb-2">No featured products</h3>
+              <p className="text-muted-foreground">
+                Visit the admin panel to feature some products.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

@@ -45,6 +45,21 @@ const ProductsPage = () => {
     return matchesSearchTerm && matchesCategory;
   });
 
+  // Sort products - featured products first, then by display_order
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    // Featured products first
+    if (a.is_featured && !b.is_featured) return -1;
+    if (!a.is_featured && b.is_featured) return 1;
+    
+    // Then by display_order if available
+    if (a.display_order && b.display_order) {
+      return a.display_order - b.display_order;
+    }
+    
+    // Fallback to created_at
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
+
   // Reset all filters
   const resetFilters = () => {
     setSearchTerm("");
@@ -135,9 +150,9 @@ const ProductsPage = () => {
                 <div className="flex justify-center items-center py-24">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
-              ) : filteredProducts.length > 0 ? (
+              ) : sortedProducts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProducts.map((product) => (
+                  {sortedProducts.map((product) => (
                     <ProductCard 
                       key={product.id} 
                       product={{
@@ -151,6 +166,7 @@ const ProductsPage = () => {
                         isNew: product.is_new || false,
                         rating: product.rating || 0,
                         reviewCount: product.review_count || 0,
+                        isFeatured: product.is_featured || false,
                       }} 
                     />
                   ))}

@@ -28,20 +28,38 @@ import {
   AlertDialogTitle 
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, GripVertical } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchProducts, deleteProduct, Product } from "@/api/products";
+import { fetchProducts, deleteProduct, updateProduct, updateProductOrder } from "@/api/products";
+import { Switch } from "@/components/ui/switch";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { toast } from "sonner";
 
 const AdminProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading, error } = useQuery({
+  const { data = [], isLoading, error } = useQuery({
     queryKey: ['admin-products'],
     queryFn: fetchProducts
   });
+
+  // Set local products state when data is loaded
+  useEffect(() => {
+    if (data && data.length > 0) {
+      // Sort by display_order if available, otherwise by created_at
+      const sortedProducts = [...data].sort((a, b) => {
+        if (a.display_order && b.display_order) {
+          return a.display_order - b.display_order;
+        }
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+      setProducts(sortedProducts);
+    }
+  }, [data]);
 
   // Filter products by name
   const filteredProducts = products.filter(product => 
@@ -62,6 +80,54 @@ const AdminProductsPage = () => {
     }
     setIsDeleteDialogOpen(false);
     setProductToDelete(null);
+  };
+
+  const handleFeatureToggle = async (productId: string, isCurrentlyFeatured: boolean) => {
+    try {
+      await updateProduct(productId, { is_featured: !isCurrentlyFeatured });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-products'] });
+      toast.success(`Product ${!isCurrentlyFeatured ? 'featured' : 'unfeatured'} successfully`);
+    } catch (error) {
+      console.error("Error updating feature status:", error);
+      toast.error("Failed to update product feature status");
+    }
+  };
+
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination) return;
+    
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+    
+    if (sourceIndex === destinationIndex) return;
+    
+    // Reorder products in local state
+    const reorderedProducts = [...filteredProducts];
+    const [removed] = reorderedProducts.splice(sourceIndex, 1);
+    reorderedProducts.splice(destinationIndex, 0, removed);
+    
+    // Update display order numbers
+    const updatedProducts = reorderedProducts.map((product, index) => ({
+      ...product,
+      display_order: index + 1
+    }));
+    
+    setProducts(updatedProducts);
+    
+    try {
+      // Save the new order to the database
+      await updateProductOrder(updatedProducts.map(p => ({ id: p.id, display_order: p.display_order })));
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Product order updated successfully");
+    } catch (error) {
+      console.error("Error updating product order:", error);
+      toast.error("Failed to update product order");
+      
+      // Revert to original order if there's an error
+      setProducts(data);
+    }
   };
 
   return (
@@ -103,58 +169,102 @@ const AdminProductsPage = () => {
                 <div className="text-center py-10 text-red-500">Error loading products.</div>
               ) : (
                 <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Featured</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProducts.length > 0 ? (
-                        filteredProducts.map((product) => (
-                          <TableRow key={product.id}>
-                            <TableCell className="font-medium">{product.name}</TableCell>
-                            <TableCell>{product.category?.name}</TableCell>
-                            <TableCell>
-                              {product.price 
-                                ? `$${product.price}${product.original_price ? ` (was $${product.original_price})` : ''}` 
-                                : 'N/A'}
-                            </TableCell>
-                            <TableCell>
-                              {product.is_featured ? 'Yes' : 'No'}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Link to={`/admin/products/edit/${product.id}`}>
-                                  <Button variant="outline" size="icon">
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                                <Button 
-                                  variant="outline" 
-                                  size="icon" 
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(product.id)}
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="products">
+                      {(provided) => (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead style={{ width: '50px' }}></TableHead>
+                              <TableHead style={{ width: '80px' }}>Image</TableHead>
+                              <TableHead>Product Name</TableHead>
+                              <TableHead>Category</TableHead>
+                              <TableHead>Price</TableHead>
+                              <TableHead>Featured</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody {...provided.droppableProps} ref={provided.innerRef}>
+                            {filteredProducts.length > 0 ? (
+                              filteredProducts.map((product, index) => (
+                                <Draggable 
+                                  key={product.id} 
+                                  draggableId={product.id} 
+                                  index={index}
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-10">
-                            No products found.
-                          </TableCell>
-                        </TableRow>
+                                  {(provided) => (
+                                    <TableRow 
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                    >
+                                      <TableCell 
+                                        {...provided.dragHandleProps}
+                                        className="cursor-grab"
+                                      >
+                                        <div className="flex items-center justify-center">
+                                          <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="p-2">
+                                        {product.image_url ? (
+                                          <img 
+                                            src={product.image_url} 
+                                            alt={product.name} 
+                                            className="h-12 w-12 object-cover rounded-md"
+                                          />
+                                        ) : (
+                                          <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center">
+                                            <span className="text-xs text-muted-foreground">No Image</span>
+                                          </div>
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="font-medium">{product.name}</TableCell>
+                                      <TableCell>{product.category?.name}</TableCell>
+                                      <TableCell>
+                                        {product.price 
+                                          ? `$${product.price}${product.original_price ? ` (was $${product.original_price})` : ''}` 
+                                          : 'N/A'}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Switch 
+                                          checked={product.is_featured || false}
+                                          onCheckedChange={() => handleFeatureToggle(product.id, product.is_featured || false)}
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                          <Link to={`/admin/products/edit/${product.id}`}>
+                                            <Button variant="outline" size="icon">
+                                              <Edit className="h-4 w-4" />
+                                            </Button>
+                                          </Link>
+                                          <Button 
+                                            variant="outline" 
+                                            size="icon" 
+                                            className="text-destructive"
+                                            onClick={() => handleDeleteClick(product.id)}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </Draggable>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={7} className="text-center py-10">
+                                  No products found.
+                                </TableCell>
+                              </TableRow>
+                            )}
+                            {provided.placeholder}
+                          </TableBody>
+                        </Table>
                       )}
-                    </TableBody>
-                  </Table>
+                    </Droppable>
+                  </DragDropContext>
                 </div>
               )}
             </CardContent>

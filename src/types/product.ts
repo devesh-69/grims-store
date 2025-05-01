@@ -11,4 +11,10 @@ export interface Product {
   rating: number;
   reviewCount: number;
   affiliateUrl?: string;
+  isFeatured?: boolean;
+}
+
+export interface ProductOrderUpdate {
+  id: string;
+  display_order: number;
 }
