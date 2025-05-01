@@ -36,6 +36,17 @@ import { CommentsSection } from "@/components/reports/CommentsSection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { ChartContainer } from "@/components/ui/chart";
+import { LineChart, Line } from "recharts";
+
+// Sample data for charts
+const sampleChartData = [
+  { month: 'Jan', users: 500, revenue: 8000 },
+  { month: 'Feb', users: 600, revenue: 10000 },
+  { month: 'Mar', users: 750, revenue: 12000 },
+  { month: 'Apr', users: 900, revenue: 15000 },
+  { month: 'May', users: 1100, revenue: 20000 },
+  { month: 'Jun', users: 1300, revenue: 22000 },
+];
 
 const ReportDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -200,7 +211,10 @@ const ReportDetailsPage = () => {
                           secondary: { color: "hsl(155 50% 60%)" }
                         }}
                       >
-                        {/* Chart will be rendered here */}
+                        <LineChart data={sampleChartData}>
+                          <Line type="monotone" dataKey="users" stroke="#8884d8" />
+                          <Line type="monotone" dataKey="revenue" stroke="#82ca9d" />
+                        </LineChart>
                       </ChartContainer>
                     </CardContent>
                   </Card>

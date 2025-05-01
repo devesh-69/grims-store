@@ -28,6 +28,17 @@ import { CohortTable } from "@/components/reports/CohortTable";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileText, LineChart, BarChart, PieChart, AlertTriangle, Plus, Calendar } from "lucide-react";
 import { ChartContainer } from "@/components/ui/chart";
+import { AreaChart, Area } from "recharts";
+
+// Sample data for charts
+const sampleChartData = [
+  { month: 'Jan', users: 500, revenue: 8000 },
+  { month: 'Feb', users: 600, revenue: 10000 },
+  { month: 'Mar', users: 750, revenue: 12000 },
+  { month: 'Apr', users: 900, revenue: 15000 },
+  { month: 'May', users: 1100, revenue: 20000 },
+  { month: 'Jun', users: 1300, revenue: 22000 },
+];
 
 const AdminReportsPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -185,7 +196,9 @@ const AdminReportsPage = () => {
                             secondary: { color: "hsl(155 50% 60%)" }
                           }}
                         >
-                          {/* Chart will be rendered here */}
+                          <AreaChart data={sampleChartData}>
+                            <Area type="monotone" dataKey="users" stroke="#8884d8" fill="#8884d8" />
+                          </AreaChart>
                         </ChartContainer>
                       </div>
                     </>

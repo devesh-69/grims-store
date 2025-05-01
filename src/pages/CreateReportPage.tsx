@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNav from "@/components/admin/AdminNav";
@@ -38,6 +37,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { ChartContainer } from "@/components/ui/chart";
+import { BarChart as ReBarChart, Bar } from "recharts";
+
+// Sample data for charts
+const sampleChartData = [
+  { month: 'Jan', users: 500 },
+  { month: 'Feb', users: 600 },
+  { month: 'Mar', users: 750 },
+  { month: 'Apr', users: 900 },
+  { month: 'May', users: 1100 },
+  { month: 'Jun', users: 1300 },
+];
 
 const chartTypes: { value: ChartType; label: string; icon: JSX.Element }[] = [
   { value: "line", label: "Line Chart", icon: <LineChart className="h-4 w-4" /> },
@@ -66,7 +76,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const CreateReportPage = () => {
   const navigate = useNavigate();
-  const { mutate: createReport, isLoading } = useCreateReportTemplate();
+  const createReportMutation = useCreateReportTemplate();
   const [activeTab, setActiveTab] = useState("details");
   const [previewMode, setPreviewMode] = useState(false);
   
@@ -88,7 +98,7 @@ const CreateReportPage = () => {
   });
 
   const onSubmit = (values: FormValues) => {
-    createReport({
+    createReportMutation.mutate({
       ...values,
       chart_config: values.chart_config || {},
     }, {
@@ -97,6 +107,8 @@ const CreateReportPage = () => {
       },
     });
   };
+
+  const isLoading = createReportMutation.isPending;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -403,7 +415,9 @@ const CreateReportPage = () => {
                               secondary: { color: "hsl(155 50% 60%)" }
                             }}
                           >
-                            {/* Chart will be rendered here */}
+                            <ReBarChart data={sampleChartData}>
+                              <Bar dataKey="users" fill="#8884d8" />
+                            </ReBarChart>
                           </ChartContainer>
                         </CardContent>
                       </Card>

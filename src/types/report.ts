@@ -1,4 +1,6 @@
 
+import { Json } from "@/integrations/supabase/types";
+
 export type ChartType = 
   | "line" 
   | "bar" 
@@ -20,6 +22,7 @@ export interface ChartConfig {
   showLegend?: boolean;
   legendPosition?: "top" | "right" | "bottom" | "left";
   customOptions?: Record<string, any>;
+  [key: string]: any; // Add index signature to make it compatible with Json type
 }
 
 export interface ReportTemplate {

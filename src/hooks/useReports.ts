@@ -60,7 +60,14 @@ export const useCreateReportTemplate = () => {
     mutationFn: async (template: Omit<ReportTemplate, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
         .from("report_templates")
-        .insert(template)
+        .insert({
+          name: template.name,
+          description: template.description,
+          chart_type: template.chart_type,
+          chart_config: template.chart_config as any, // Cast to any to resolve type issues
+          sql_query: template.sql_query,
+          is_public: template.is_public
+        })
         .select()
         .single();
 
@@ -89,9 +96,19 @@ export const useUpdateReportTemplate = () => {
       id: string, 
       template: Partial<Omit<ReportTemplate, "id" | "created_at" | "updated_at">> 
     }) => {
+      const updateData: any = {
+        ...template,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Ensure chart_config is properly handled
+      if (template.chart_config) {
+        updateData.chart_config = template.chart_config;
+      }
+
       const { data, error } = await supabase
         .from("report_templates")
-        .update({ ...template, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -201,10 +218,14 @@ export const useReportComments = (templateId?: string) => {
         throw error;
       }
       
-      // Structure comments as a tree
+      // Structure comments as a tree with proper type handling
       const comments = data.map(comment => ({
         ...comment,
-        user: comment.profiles,
+        user: comment.profiles ? {
+          first_name: comment.profiles.first_name,
+          last_name: comment.profiles.last_name, 
+          avatar_url: comment.profiles.avatar_url
+        } : undefined,
         replies: []
       }));
       
