@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { fetchUserWishlist, removeProductFromWishlist, createShareableWishlist } from "@/api/wishlist";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Trash2, Share2 } from "lucide-react"; // Import Share2 icon
+import { Trash2, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from 'sonner';
 
@@ -45,18 +45,18 @@ const WishlistPage = () => {
     onError: (err: any) => {
       toast.error(err.message || "Failed to create shareable link.");
       console.error("Share wishlist error:", err);
-    },
+    },\
   });
 
   const handleRemoveItem = (productId: string) => {
     if (user) {
       removeMutation.mutate({ userId: user.id, productId });
-    }
+    }\
   };
 
   const handleShareWishlist = () => {
     if (user) {
-      shareMutation.mutate(user.id);
+      shareMutation.mutate(user.id);\
     }
   };
 
@@ -68,7 +68,7 @@ const WishlistPage = () => {
           <p>Loading authentication status...</p>
         </div>
       </Layout>
-    );
+    );\
   }
 
   if (!user) {
@@ -82,7 +82,7 @@ const WishlistPage = () => {
           </Button>
         </div>
       </Layout>
-    );
+    );\
   }
 
   if (isLoading) {
@@ -93,7 +93,7 @@ const WishlistPage = () => {
           <p>Loading wishlist...</p>
         </div>
       </Layout>
-    );
+    );\
   }
 
   if (error) {
@@ -104,7 +104,7 @@ const WishlistPage = () => {
           <p>Error loading wishlist: {(error as Error).message}</p>
         </div>
       </Layout>
-    );
+    );\
   }
 
   return (
@@ -127,29 +127,32 @@ const WishlistPage = () => {
         {wishlistItems && wishlistItems.length > 0 ? (
           <div className="space-y-6">
             {wishlistItems.map((item) => (
-              <div key={item.product.id} className="flex items-center space-x-4 border-b pb-4 last:border-b-0 last:pb-0">
-                <Link to={`/products/${item.product.id}`}>
-                  <img
-                    src={item.product.image_url || "/placeholder.svg"}
-                    alt={item.product.name}
-                    className="w-16 h-16 object-cover rounded-md"
-                  />
-                </Link>
-                <div className="flex-1">
-                  <Link to={`/products/${item.product.id}`} className="text-lg font-semibold hover:underline">
-                    {item.product.name}
+              // Add a check to ensure item.product exists
+              item.product ? (
+                <div key={item.product.id} className="flex items-center space-x-4 border-b pb-4 last:border-b-0 last:pb-0">
+                  <Link to={`/products/${item.product.id}`}>
+                    <img
+                      src={item.product.image_url || "/placeholder.svg"}
+                      alt={item.product.name}
+                      className="w-16 h-16 object-cover rounded-md"
+                    />
                   </Link>
-                  <p className="text-muted-foreground text-sm">{item.product.short_description}</p>
+                  <div className="flex-1">
+                    <Link to={`/products/${item.product.id}`} className="text-lg font-semibold hover:underline">
+                      {item.product.name}
+                    </Link>
+                    <p className="text-muted-foreground text-sm">{item.product.short_description}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleRemoveItem(item.product_id)}
+                    disabled={removeMutation.isLoading}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleRemoveItem(item.product_id)}
-                  disabled={removeMutation.isLoading}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
-              </div>
+              ) : null // Skip rendering if item.product is undefined
             ))}
           </div>
         ) : (

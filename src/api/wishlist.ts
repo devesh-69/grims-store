@@ -1,38 +1,38 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const addProductToWishlist = async (userId: string, productId: string) => {
-  // Check if the product is already in the wishlist to avoid duplicates
+  // Check if the item is already wishlisted to prevent duplicates
   const { data: existingItem, error: fetchError } = await supabase
     .from('wishlist_products')
-    .select('*')
+    .select('id')
     .eq('user_id', userId)
     .eq('product_id', productId)
     .single();
 
-  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
+  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
     console.error("Error checking existing wishlist item:", fetchError);
     throw fetchError;
   }
 
   if (existingItem) {
-    // Item already exists, no need to insert
-    console.log("Product already in wishlist.");
-    return existingItem; // Or null, depending on desired return for existing items
+    // Item already exists, do not insert
+    console.log("Product already in wishlist");
+    return null; // Indicate that no new item was added
   }
 
-  // If not exists, insert
+  // Insert the new wishlist item
   const { data, error } = await supabase
     .from('wishlist_products')
     .insert([
       { user_id: userId, product_id: productId }
     ])
-    .select(); // Select the inserted row
+    .select(); // Select the inserted data
 
   if (error) {
     console.error("Error adding product to wishlist:", error);
     throw error;
   }
-  return data ? data[0] : null; // Return the inserted item
+  return data;
 };
 
 export const removeProductFromWishlist = async (userId: string, productId: string) => {
@@ -46,7 +46,8 @@ export const removeProductFromWishlist = async (userId: string, productId: strin
     console.error("Error removing product from wishlist:", error);
     throw error;
   }
-  // For delete operations, typically no data is returned, just success/failure
+  // No data is typically returned on delete, just check for error
+  return true; // Indicate success
 };
 
 export const fetchUserWishlist = async (userId: string) => {
@@ -63,7 +64,7 @@ export const fetchUserWishlist = async (userId: string) => {
   return data || [];
 };
 
-// New function to create a shareable wishlist link
+// Function to create a shareable wishlist link
 export const createShareableWishlist = async (userId: string): Promise<string> => {
   // Fetch the user's current wishlist product IDs
   const { data: wishlistItems, error: fetchError } = await supabase
@@ -79,6 +80,8 @@ export const createShareableWishlist = async (userId: string): Promise<string> =
   const productIds = wishlistItems.map(item => item.product_id);
 
   if (productIds.length === 0) {
+      // Return a specific indicator or throw a distinct error for empty wishlist
+      // Throwing an error might be better to handle in the UI
       throw new Error("Your wishlist is empty. Cannot create a shareable link.");
   }
 
@@ -86,7 +89,7 @@ export const createShareableWishlist = async (userId: string): Promise<string> =
   const { data: sharedData, error: insertError } = await supabase
     .from('shared_wishlists')
     .insert([
-      { product_ids: productIds }
+      { user_id: userId, product_ids: productIds } // Include user_id
     ])
     .select('id'); // Select the generated ID
 
@@ -103,7 +106,7 @@ export const createShareableWishlist = async (userId: string): Promise<string> =
   return sharedData[0].id as string;
 };
 
-// New function to import a wishlist from a shareable link
+// Function to import a wishlist from a shareable link
 export const importWishlist = async (userId: string, shareId: string): Promise<void> => {
   // Fetch the shared wishlist product IDs
   const { data: sharedWishlist, error: fetchError } = await supabase
@@ -121,47 +124,46 @@ export const importWishlist = async (userId: string, shareId: string): Promise<v
     throw new Error("Shared wishlist not found or is empty.");
   }
 
-  const sharedProductIds: string[] = sharedWishlist.product_ids;
+  const sharedProductIds: string[] = sharedWishlist.product_ids as string[]; // Cast to string array
 
-  // Fetch the user's current wishlist product IDs
+  // Fetch the user's current wishlist product IDs to avoid duplicates
   const { data: userWishlistItems, error: fetchUserWishlistError } = await supabase
     .from('wishlist_products')
     .select('product_id')
     .eq('user_id', userId);
 
-  if (fetchUserWishlistError && fetchUserWishlistError.code !== 'PGRST116') {
-      console.error("Error fetching user's current wishlist:", fetchUserWishlistError);
-      throw fetchUserWishlistError;
+  if (fetchUserWishlistError) {
+    console.error("Error fetching user wishlist during import:", fetchUserWishlistError);
+    throw fetchUserWishlistError;
   }
 
-  const currentUserProductIds = userWishlistItems ? userWishlistItems.map(item => item.product_id) : [];
+  const currentUserProductIds = userWishlistItems?.map(item => item.product_id) || [];
 
-  // Filter out products already in the user's wishlist
+  // Filter out product IDs that are already in the user's wishlist
   const productIdsToImport = sharedProductIds.filter(
-    productId => !currentUserProductIds.includes(productId)
+    (productId) => !currentUserProductIds.includes(productId)
   );
 
   if (productIdsToImport.length === 0) {
-      console.log("All products from the shared wishlist are already in the user's wishlist.");
-      // Optionally, throw a specific error or return a message indicating this
-      return; 
+      console.log("All products from shared wishlist are already in the user's wishlist.");
+      return; // Nothing to import
   }
 
   // Prepare data for insertion
-  const itemsToInsert = productIdsToImport.map(productId => ({
-    user_id: userId,
-    product_id: productId,
+  const insertData = productIdsToImport.map(productId => ({
+      user_id: userId,
+      product_id: productId
   }));
 
-  // Insert new items into the user's wishlist
+  // Insert the new wishlist items
   const { error: insertError } = await supabase
     .from('wishlist_products')
-    .insert(itemsToInsert);
+    .insert(insertData);
 
   if (insertError) {
     console.error("Error importing wishlist items:", insertError);
     throw insertError;
   }
 
-  console.log(`Successfully imported ${itemsToInsert.length} items.`);
+  console.log(`Successfully imported ${insertData.length} items.`);
 };

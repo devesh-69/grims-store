@@ -22,7 +22,8 @@ import AdminReportsPage from "./pages/AdminReportsPage";
 import ReportDetailsPage from "./pages/ReportDetailsPage";
 import CreateReportPage from "./pages/CreateReportPage";
 import ScheduledReportsPage from "./pages/ScheduledReportsPage";
-import WishlistPage from "./pages/WishlistPage"; // Import WishlistPage
+import WishlistPage from "./pages/WishlistPage";
+import ImportWishlistPage from "./pages/ImportWishlistPage"; // Import ImportWishlistPage
 
 const queryClient = new QueryClient();
 
@@ -40,9 +41,14 @@ const App = () => (
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/wishlist" element={ // Add Wishlist route
+            <Route path="/wishlist" element={
               <ProtectedRoute>
                 <WishlistPage />
+              </ProtectedRoute>
+            } />
+             <Route path="/wishlist/import/:shareId" element={ // Add Import Wishlist route
+              <ProtectedRoute>
+                <ImportWishlistPage />
               </ProtectedRoute>
             } />
             <Route path="/admin" element={
