@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/products/ProductCard";
 import { Input } from "@/components/ui/input";
@@ -13,13 +12,19 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchProducts, fetchCategories } from "@/api/products";
+import { useAuth } from "@/contexts/AuthContext";
+import { fetchUserWishlist, addProductToWishlist, removeProductFromWishlist } from "@/api/wishlist";
+import { toast } from 'sonner';
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [filtersVisible, setFiltersVisible] = useState(false);
+
+  const { user, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: products = [], isLoading: loadingProducts } = useQuery({
     queryKey: ['products'],
@@ -31,13 +36,59 @@ const ProductsPage = () => {
     queryFn: fetchCategories
   });
 
+  const { data: userWishlist = [], isLoading: loadingWishlist } = useQuery({
+    queryKey: ['userWishlist', user?.id],
+    queryFn: () => fetchUserWishlist(user!.id),
+    enabled: !!user?.id && !authLoading,
+    select: (data) => data.map(item => item.product_id), // Select only product_ids
+  });
+
+  const addWishlistMutation = useMutation({
+    mutationFn: ({ userId, productId }: { userId: string, productId: string }) =>
+      addProductToWishlist(userId, productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userWishlist', user?.id] });
+      toast.success("Added to wishlist");
+    },
+    onError: (err) => {
+      toast.error("Failed to add to wishlist.");
+      console.error("Add wishlist item error:", err);
+    },
+  });
+
+  const removeWishlistMutation = useMutation({
+    mutationFn: ({ userId, productId }: { userId: string, productId: string }) =>
+      removeProductFromWishlist(userId, productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userWishlist', user?.id] });
+      toast.success("Removed from wishlist");
+    },
+    onError: (err) => {
+      toast.error("Failed to remove from wishlist.");
+      console.error("Remove wishlist item error:", err);
+    },
+  });
+
+  const handleToggleWishlist = useCallback(async (productId: string, isWishlisted: boolean) => {
+    if (!user) {
+      toast.info("Please log in to add items to your wishlist.");
+      return;
+    }
+
+    if (isWishlisted) {
+      removeWishlistMutation.mutate({ userId: user.id, productId });
+    } else {
+      addWishlistMutation.mutate({ userId: user.id, productId });
+    }
+  }, [user, addWishlistMutation, removeWishlistMutation]);
+
   // Filter products
   const filteredProducts = products.filter((product) => {
     // Search term filter
     const matchesSearchTerm = product.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase()) || 
-      product.short_description.toLowerCase().includes(searchTerm.toLowerCase());
+      (product.short_description || '').toLowerCase().includes(searchTerm.toLowerCase()); // Handle null/undefined short_description
 
     // Category filter
     const matchesCategory = selectedCategory === "all" || product.category_id === selectedCategory;
@@ -52,12 +103,12 @@ const ProductsPage = () => {
     if (!a.is_featured && b.is_featured) return 1;
     
     // Then by display_order if available
-    if (a.display_order && b.display_order) {
+    if (a.display_order != null && b.display_order != null) { // Check for null/undefined
       return a.display_order - b.display_order;
     }
     
     // Fallback to created_at
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); // Latest first for fallback
   });
 
   // Reset all filters
@@ -146,7 +197,7 @@ const ProductsPage = () => {
                 </div>
               </div>
 
-              {loadingProducts ? (
+              {loadingProducts || loadingWishlist ? (
                 <div className="flex justify-center items-center py-24">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
@@ -155,18 +206,10 @@ const ProductsPage = () => {
                   {sortedProducts.map((product) => (
                     <ProductCard 
                       key={product.id} 
-                      product={{
-                        id: product.id,
-                        name: product.name,
-                        description: product.short_description,
-                        
-                        image: product.image_url || "/placeholder.svg",
-                        category: product.category?.name || "",
-                        isNew: product.is_new || false,
-                        rating: product.rating || 0,
-                        reviewCount: product.review_count || 0,
-                        isFeatured: product.is_featured || false,
-                      }} 
+                      product={product} // Pass the full product object
+                      isWishlisted={userWishlist.includes(product.id)} // Check if product ID is in the user's wishlist
+                      onToggleWishlist={handleToggleWishlist} // Pass the toggle handler
+                      disabled={addWishlistMutation.isLoading || removeWishlistMutation.isLoading} // Disable while mutating
                     />
                   ))}
                 </div>

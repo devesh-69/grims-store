@@ -22,6 +22,7 @@ import AdminReportsPage from "./pages/AdminReportsPage";
 import ReportDetailsPage from "./pages/ReportDetailsPage";
 import CreateReportPage from "./pages/CreateReportPage";
 import ScheduledReportsPage from "./pages/ScheduledReportsPage";
+import WishlistPage from "./pages/WishlistPage"; // Import WishlistPage
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,11 @@ const App = () => (
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/wishlist" element={ // Add Wishlist route
+              <ProtectedRoute>
+                <WishlistPage />
+              </ProtectedRoute>
+            } />
             <Route path="/admin" element={
               <ProtectedRoute>
                 <AdminDashboard />

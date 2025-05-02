@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -9,20 +8,22 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchFeaturedProducts } from "@/api/products";
 import { blogs } from "@/data/blogs";
 import { Loader2 } from "lucide-react";
+import ThreeDHero from "@/components/hero/ThreeDHero";
 
 const HomePage = () => {
   const { data: featuredProducts = [], isLoading } = useQuery({
     queryKey: ['featured-products'],
     queryFn: fetchFeaturedProducts
   });
-  
+
   const latestBlogs = blogs.slice(0, 3);
 
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="hero-gradient py-16 md:py-24 text-white">
-        <div className="container mx-auto px-4">
+      <section className="relative py-16 md:py-24 text-white">
+        <ThreeDHero />
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl md:text-5xl font-bold mb-6 animate-fade-in">
               Discover the Best Products for Your Lifestyle
@@ -55,7 +56,7 @@ const HomePage = () => {
               View All <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
-          
+
           {isLoading ? (
             <div className="flex justify-center items-center py-24">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -63,8 +64,8 @@ const HomePage = () => {
           ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredProducts.map((product) => (
-                <ProductCard 
-                  key={product.id} 
+                <ProductCard
+                  key={product.id}
                   product={{
                     id: product.id,
                     name: product.name,
@@ -77,7 +78,7 @@ const HomePage = () => {
                     rating: product.rating || 0,
                     reviewCount: product.review_count || 0,
                     isFeatured: true,
-                  }} 
+                  }}
                 />
               ))}
             </div>

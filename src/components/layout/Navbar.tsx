@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -66,8 +65,37 @@ const Navbar = () => {
           <span className="text-xl font-bold text-primary">Grim's Store</span>
         </Link>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center space-x-6">
+        {/* Desktop Nav, Search, and Wishlist */}
+        <div className="hidden md:flex items-center space-x-6 flex-grow justify-end">
+           <div className="relative w-full max-w-sm">
+              <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+              {searchResults.length > 0 && searchQuery.length > 1 && (
+                <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto top-full left-0">
+                  {searchResults.map((product) => (
+                    <div
+                      key={product.id}
+                      className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center"
+                      onClick={() => handleSelectResult(product.id)}
+                    >
+                      <img src={product.image_url || "/placeholder.svg"} alt={product.name} className="w-8 h-8 object-cover rounded-md mr-2" />
+                      {product.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+             {user && (
+               <Button variant="ghost" size="icon" onClick={() => navigate('/wishlist')} aria-label="Wishlist">
+                 <ShoppingBag className="h-5 w-5" />
+               </Button>
+             )}
           {navItems.map((item) => (
             <Link
               key={item.name}
@@ -78,36 +106,8 @@ const Navbar = () => {
               {item.name}
             </Link>
           ))}
-        </div>
 
-        {/* Search Bar */}
-         <div className="relative w-full max-w-sm mx-4">
-            <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search products..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-            {searchResults.length > 0 && searchQuery.length > 1 && (
-              <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-                {searchResults.map((product) => (
-                  <div
-                    key={product.id}
-                    className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center"
-                    onClick={() => handleSelectResult(product.id)}
-                  >
-                    <img src={product.image} alt={product.name} className="w-8 h-8 object-cover rounded-md mr-2" />
-                    {product.name}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        {/* Auth/User section */}
-        <div className="hidden md:flex items-center space-x-4">
+          {/* Auth/User section (Desktop) */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -147,20 +147,54 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-foreground"
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Mobile menu button and Wishlist Icon */}
+        <div className="flex items-center md:hidden">
+           {user && (
+               <Button variant="ghost" size="icon" className="mr-2" onClick={() => navigate('/wishlist')} aria-label="Wishlist">
+                 <ShoppingBag className="h-5 w-5" />
+               </Button>
+             )}
+            <button
+              className="text-foreground"
+              onClick={toggleMenu}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+        </div>
+
+
       </div>
 
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-background border-b border-border animate-fade-in">
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
+             {/* Search Bar (Mobile) */}
+             <div className="relative w-full mb-2">
+                <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search products..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+                {searchResults.length > 0 && searchQuery.length > 1 && (
+                  <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto top-full left-0">
+                    {searchResults.map((product) => (
+                      <div
+                        key={product.id}
+                        className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center"
+                        onClick={() => handleSelectResult(product.id)}
+                      >
+                        <img src={product.image_url || "/placeholder.svg"} alt={product.name} className="w-8 h-8 object-cover rounded-md mr-2" />
+                        {product.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+             </div>
             {navItems.map((item) => (
               <Link
                 key={item.name}
