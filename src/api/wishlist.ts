@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const addProductToWishlist = async (userId: string, productId: string) => {
@@ -53,7 +54,13 @@ export const removeProductFromWishlist = async (userId: string, productId: strin
 export const fetchUserWishlist = async (userId: string) => {
   const { data, error } = await supabase
     .from('wishlist_products')
-    .select('*, products(*)') // Select all from wishlist_products and join with products table
+    .select(`
+      id, 
+      product_id, 
+      user_id, 
+      created_at,
+      products:product_id (*)
+    `) // Join with products table using product_id as the key
     .eq('user_id', userId);
 
   if (error) {

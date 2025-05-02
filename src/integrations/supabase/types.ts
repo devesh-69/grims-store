@@ -513,6 +513,35 @@ export type Database = {
           },
         ]
       }
+      shared_wishlists: {
+        Row: {
+          created_at: string
+          id: number
+          product_ids: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          product_ids: Json
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          product_ids?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_wishlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -536,6 +565,42 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      wishlist_products: {
+        Row: {
+          created_at: string
+          id: number
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          product_id?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_productss_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlist_productss_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

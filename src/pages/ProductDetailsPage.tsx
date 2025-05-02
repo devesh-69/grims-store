@@ -31,6 +31,7 @@ const ProductDetailsPage = () => {
     queryKey: ['userWishlist', user?.id],
     queryFn: () => fetchUserWishlist(user!.id),
     enabled: !!user?.id,
+    select: (data) => data.map(item => item.product_id), // Select only product_ids
   });
 
   useEffect(() => {
@@ -284,4 +285,4 @@ const ProductDetailsPage = () => {
   );
 };
 
-export default ProductDetailsPage; 
+export default ProductDetailsPage;
