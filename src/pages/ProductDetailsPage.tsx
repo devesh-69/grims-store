@@ -199,7 +199,7 @@ const ProductDetailsPage = () => {
             <div className="mt-8">
               <h3 className="text-xl font-semibold mb-4">Product Description</h3>
               <div className="prose prose-sm max-w-none">
-                {product.detailed_description || product.short_description || product.description || "No description available."}
+                {product.detailed_description || product.short_description}
               </div>
             </div>
 

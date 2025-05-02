@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Blog } from "@/types/blog";
@@ -54,7 +55,7 @@ const AdminBlogPostsPage = () => {
           // Add default values for missing Blog properties if needed
           date: new Date().toISOString(), // Example default date
           author: { name: "Admin", avatar: "/placeholder-avatar.jpg" }, // Example default author
-          excerpt: blogData.detailedDescription?.substring(0, 150) || "", // Example excerpt
+          excerpt: blogData.content?.substring(0, 150) || "", // Use content instead of detailedDescription
           coverImage: "/placeholder.svg", // Example default image
         } as Blog;
         setBlogs([newBlog, ...blogs]);

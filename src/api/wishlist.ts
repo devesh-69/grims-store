@@ -109,17 +109,22 @@ export const createShareableWishlist = async (userId: string): Promise<string> =
       throw new Error("Failed to create shareable wishlist ID.");
   }
 
-  // Return the generated share ID as string
-  return sharedData[0].id as string;
+  // Convert the id to string explicitly before returning it
+  return String(sharedData[0].id);
 };
 
 // Function to import a wishlist from a shareable link
 export const importWishlist = async (userId: string, shareId: string): Promise<void> => {
-  // Fetch the shared wishlist product IDs
+  // Fetch the shared wishlist product IDs - parse shareId as number
+  const shareIdNumber = parseInt(shareId, 10);
+  if (isNaN(shareIdNumber)) {
+    throw new Error("Invalid share ID format.");
+  }
+
   const { data: sharedWishlist, error: fetchError } = await supabase
     .from('shared_wishlists')
     .select('product_ids')
-    .eq('id', shareId)
+    .eq('id', shareIdNumber)
     .single();
 
   if (fetchError) {

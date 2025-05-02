@@ -8,7 +8,7 @@ const ThreeDHero: React.FC = () => {
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const modelRef = useRef<THREE.Group | null>(null);
-  const animateRef = useRef<number>(null);
+  const animateRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!mountRef.current) {

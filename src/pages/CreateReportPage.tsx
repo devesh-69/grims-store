@@ -1,5 +1,5 @@
-
-import React, { useState } from "react";
+import * as React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
