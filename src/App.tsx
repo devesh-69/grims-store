@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,7 +24,8 @@ import ReportDetailsPage from "./pages/ReportDetailsPage";
 import CreateReportPage from "./pages/CreateReportPage";
 import ScheduledReportsPage from "./pages/ScheduledReportsPage";
 import WishlistPage from "./pages/WishlistPage";
-import ImportWishlistPage from "./pages/ImportWishlistPage"; // Import ImportWishlistPage
+import ImportWishlistPage from "./pages/ImportWishlistPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage"; // Import the new settings page
 
 const queryClient = new QueryClient();
 
@@ -46,7 +48,7 @@ const App = () => (
                 <WishlistPage />
               </ProtectedRoute>
             } />
-             <Route path="/wishlist/import/:shareId" element={ // Add Import Wishlist route
+             <Route path="/wishlist/import/:shareId" element={
               <ProtectedRoute>
                 <ImportWishlistPage />
               </ProtectedRoute>
@@ -99,6 +101,11 @@ const App = () => (
             <Route path="/admin/scheduled-reports" element={
               <ProtectedRoute>
                 <ScheduledReportsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute>
+                <AdminSettingsPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
