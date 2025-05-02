@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdminNav from "@/components/admin/AdminNav";
@@ -67,11 +66,11 @@ const AdminEditProductPage = () => {
     }
   }, [product]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | React.ChangeEvent<HTMLTextAreaElement>>) => {
-    const { name, value } = e.target;
-     setFormData({
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const target = e.target;
+    setFormData({
       ...formData,
-      [name]: value
+      [target.name]: target.value
     });
   };
 
@@ -231,8 +230,6 @@ const AdminEditProductPage = () => {
                     onChange={handleInputChange}
                   />
                 </div>
-
-                {/* Removed Price and Original Price fields */}
 
                 <div className="space-y-2">
                   <Label htmlFor="image">Product Image</Label>

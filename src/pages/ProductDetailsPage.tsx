@@ -195,11 +195,11 @@ const ProductDetailsPage = () => {
             </div>
             <Separator className="my-6" />
 
-            {/* Description */}
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Description</h2>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p className="text-base text-foreground leading-relaxed">{product.description || product.short_description}</p>
+            {/* Product Description */}
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold mb-4">Product Description</h3>
+              <div className="prose prose-sm max-w-none">
+                {product.detailed_description || product.short_description || product.description || "No description available."}
               </div>
             </div>
 

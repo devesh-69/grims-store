@@ -206,10 +206,10 @@ const ProductsPage = () => {
                   {sortedProducts.map((product) => (
                     <ProductCard 
                       key={product.id} 
-                      product={product} // Pass the full product object
-                      isWishlisted={userWishlist.includes(product.id)} // Check if product ID is in the user's wishlist
-                      onToggleWishlist={handleToggleWishlist} // Pass the toggle handler
-                      disabled={addWishlistMutation.isLoading || removeWishlistMutation.isLoading} // Disable while mutating
+                      product={product}
+                      isWishlisted={userWishlist.includes(product.id)}
+                      onToggleWishlist={handleToggleWishlist}
+                      disabled={addWishlistMutation.isPending || removeWishlistMutation.isPending}
                     />
                   ))}
                 </div>

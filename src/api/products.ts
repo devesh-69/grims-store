@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProductOrderUpdate } from "@/types/product";
@@ -9,6 +10,7 @@ export interface ProductFormData {
   detailed_description?: string;
   image_url?: string;
   is_featured?: boolean;
+  // Note: price and original_price removed from ProductFormData
 }
 
 export interface Product {
@@ -105,13 +107,10 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
     const lastProduct = products && products.length > 0 ? products[0] : null;
     const newDisplayOrder = lastProduct?.display_order ? lastProduct.display_order + 1 : 1;
 
-    // Exclude price fields before inserting
-    const { price, original_price, ...dataToInsert } = productData;
-
     const { data, error } = await supabase
       .from("products")
       .insert({
-        ...dataToInsert,
+        ...productData,
         created_by: userData.user.id,
         display_order: newDisplayOrder
       })
@@ -132,12 +131,9 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
 
 export const updateProduct = async (id: string, productData: Partial<ProductFormData>): Promise<Product | null> => {
   try {
-     // Exclude price fields before updating
-    const { price, original_price, ...dataToUpdate } = productData;
-
     const { data, error } = await supabase
       .from("products")
-      .update(dataToUpdate)
+      .update(productData)
       .eq("id", id)
       .select()
       .single();

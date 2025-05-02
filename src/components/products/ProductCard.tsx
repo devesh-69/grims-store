@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,15 +19,15 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist, disabled }: Prod
       <CardHeader className="p-0 relative">
         <Link to={`/products/${product.id}`} className="block">
           <img
-            src={product.image_url || "/placeholder.svg"}
+            src={product.image_url || product.image || "/placeholder.svg"}
             alt={product.name}
             className="w-full h-48 object-cover transition-transform hover:scale-105"
           />
           <div className="absolute top-2 right-2 flex flex-col gap-1">
-            {product.is_new && (
+            {(product.is_new || product.isNew) && (
               <Badge className="bg-primary text-white">New</Badge>
             )}
-            {product.is_featured && (
+            {(product.is_featured || product.isFeatured) && (
               <Badge className="bg-orange-500 text-white">Featured</Badge>
             )}
           </div>
@@ -67,9 +68,9 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist, disabled }: Prod
               />
             </svg>
           ))}
-          <span className="text-sm text-muted-foreground ml-1">({product.review_count || 0})</span>
+          <span className="text-sm text-muted-foreground ml-1">({product.review_count || product.reviewCount || 0})</span>
         </div>
-        <p className="text-muted-foreground text-sm line-clamp-2 h-10">{product.short_description || product.description}</p>
+        <p className="text-muted-foreground text-sm line-clamp-2 h-10">{product.short_description || product.description || ""}</p>
       </CardContent>
       <CardFooter className="flex justify-center border-t border-border pt-4">
         <Link to={`/products/${product.id}`}>

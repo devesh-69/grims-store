@@ -109,7 +109,7 @@ export const createShareableWishlist = async (userId: string): Promise<string> =
       throw new Error("Failed to create shareable wishlist ID.");
   }
 
-  // Return the generated share ID
+  // Return the generated share ID as string
   return sharedData[0].id as string;
 };
 
@@ -127,7 +127,7 @@ export const importWishlist = async (userId: string, shareId: string): Promise<v
     throw fetchError;
   }
 
-  if (!sharedWishlist || !sharedWishlist.product_ids || sharedWishlist.product_ids.length === 0) {
+  if (!sharedWishlist || !sharedWishlist.product_ids || !Array.isArray(sharedWishlist.product_ids) || sharedWishlist.product_ids.length === 0) {
     throw new Error("Shared wishlist not found or is empty.");
   }
 

@@ -67,18 +67,13 @@ const HomePage = () => {
                 <ProductCard
                   key={product.id}
                   product={{
-                    id: product.id,
-                    name: product.name,
+                    ...product,
                     description: product.short_description,
-                    price: product.price,
-                    originalPrice: product.original_price,
-                    image: product.image_url || "/placeholder.svg",
-                    category: product.category?.name || "",
-                    isNew: product.is_new || false,
-                    rating: product.rating || 0,
-                    reviewCount: product.review_count || 0,
-                    isFeatured: true,
+                    image: product.image_url,
+                    reviewCount: product.review_count
                   }}
+                  isWishlisted={false}
+                  onToggleWishlist={() => {}}
                 />
               ))}
             </div>
