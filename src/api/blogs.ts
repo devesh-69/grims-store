@@ -7,7 +7,7 @@ import { BlogFormData } from '@/types/blog-admin';
  */
 export const fetchPublishedBlogs = async (): Promise<Blog[]> => {
   const { data, error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .select(`
       id,
       title,
@@ -22,7 +22,9 @@ export const fetchPublishedBlogs = async (): Promise<Blog[]> => {
       author_id,
       seo,
       social_preview,
-      profiles(id, first_name, last_name, avatar_url)
+      first_name,
+      last_name,
+      avatar_url
     `)
     .eq('status', 'published')
     .lte('published_at', new Date().toISOString())
@@ -41,10 +43,8 @@ export const fetchPublishedBlogs = async (): Promise<Blog[]> => {
     category: item.category,
     author: {
       id: item.author_id,
-      name: item.profiles ? 
-        `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Anonymous' : 
-        'Anonymous',
-      avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      name: `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Anonymous',
+      avatar: item.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
     seo: item.seo as Blog['seo'],
     socialPreview: item.social_preview as Blog['socialPreview']
@@ -56,7 +56,7 @@ export const fetchPublishedBlogs = async (): Promise<Blog[]> => {
  */
 export const fetchBlogBySlug = async (slug: string): Promise<Blog | null> => {
   const { data, error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .select(`
       id,
       title,
@@ -71,7 +71,9 @@ export const fetchBlogBySlug = async (slug: string): Promise<Blog | null> => {
       author_id,
       seo,
       social_preview,
-      profiles(id, first_name, last_name, avatar_url)
+      first_name,
+      last_name,
+      avatar_url
     `)
     .eq('slug', slug)
     .eq('status', 'published')
@@ -93,10 +95,8 @@ export const fetchBlogBySlug = async (slug: string): Promise<Blog | null> => {
     category: data.category,
     author: {
       id: data.author_id,
-      name: data.profiles ? 
-        `${data.profiles.first_name || ''} ${data.profiles.last_name || ''}`.trim() || 'Anonymous' : 
-        'Anonymous',
-      avatar: data.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Anonymous',
+      avatar: data.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
     seo: data.seo as Blog['seo'],
     socialPreview: data.social_preview as Blog['socialPreview']
@@ -108,7 +108,7 @@ export const fetchBlogBySlug = async (slug: string): Promise<Blog | null> => {
  */
 export const fetchAllBlogs = async (): Promise<Blog[]> => {
   const { data, error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .select(`
       id,
       title,
@@ -124,7 +124,9 @@ export const fetchAllBlogs = async (): Promise<Blog[]> => {
       author_id,
       seo,
       social_preview,
-      profiles(id, first_name, last_name, avatar_url)
+      first_name,
+      last_name,
+      avatar_url
     `)
     .order('updated_at', { ascending: false });
 
@@ -142,10 +144,8 @@ export const fetchAllBlogs = async (): Promise<Blog[]> => {
     category: item.category,
     author: {
       id: item.author_id,
-      name: item.profiles ? 
-        `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Anonymous' : 
-        'Anonymous',
-      avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      name: `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Anonymous',
+      avatar: item.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
     seo: item.seo as Blog['seo'],
     socialPreview: item.social_preview as Blog['socialPreview']
@@ -157,7 +157,7 @@ export const fetchAllBlogs = async (): Promise<Blog[]> => {
  */
 export const fetchBlogById = async (id: string): Promise<Blog | null> => {
   const { data, error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .select(`
       id,
       title,
@@ -173,7 +173,9 @@ export const fetchBlogById = async (id: string): Promise<Blog | null> => {
       author_id,
       seo,
       social_preview,
-      profiles(id, first_name, last_name, avatar_url)
+      first_name,
+      last_name,
+      avatar_url
     `)
     .eq('id', id)
     .single();
@@ -194,10 +196,8 @@ export const fetchBlogById = async (id: string): Promise<Blog | null> => {
     category: data.category,
     author: {
       id: data.author_id,
-      name: data.profiles ? 
-        `${data.profiles.first_name || ''} ${data.profiles.last_name || ''}`.trim() || 'Anonymous' : 
-        'Anonymous',
-      avatar: data.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Anonymous',
+      avatar: data.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
     seo: data.seo as Blog['seo'],
     socialPreview: data.social_preview as Blog['socialPreview']
@@ -215,7 +215,7 @@ export const createBlog = async (blogData: BlogFormData): Promise<string> => {
     .replace(/\s+/g, '-');
 
   const { data, error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .insert({
       title: blogData.title,
       slug: `${slug}-${Date.now()}`, // Ensure uniqueness
@@ -258,7 +258,7 @@ export const updateBlog = async (id: string, blogData: BlogFormData): Promise<vo
   }
 
   const { error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .update({
       title: blogData.title,
       ...slugUpdate,
@@ -282,7 +282,7 @@ export const updateBlog = async (id: string, blogData: BlogFormData): Promise<vo
  */
 export const deleteBlog = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .delete()
     .eq('id', id);
 
@@ -294,7 +294,7 @@ export const deleteBlog = async (id: string): Promise<void> => {
  */
 export const publishBlog = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('blogs')
+    .from('blog_with_authors')
     .update({
       status: 'published',
       published_at: new Date().toISOString(),
