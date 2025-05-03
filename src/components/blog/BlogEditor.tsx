@@ -27,16 +27,24 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const blogFormSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   excerpt: z.string().min(10, "Excerpt must be at least 10 characters"),
   content: z.string().min(50, "Content must be at least 50 characters"),
   coverImage: z.string().url("Must be a valid URL"),
-  date: z.date(),
+  date: z.date().optional(),
+  status: z.string().default("draft"),
   category: z.string().optional(),
   metaTitle: z.string().optional(),
-  metaDescription: z.string().min(50, "Meta description should be at least 50 characters").max(160, "Meta description should be less than 160 characters").optional(),
+  metaDescription: z.string().min(50, "Meta description should be at least 50 characters").max(160, "Meta description should be less than 160 characters").optional().or(z.literal("")),
   canonicalUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   keywords: z.string().optional(),
   ogTitle: z.string().optional(),
@@ -84,7 +92,8 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
           excerpt: blog.excerpt,
           content: blog.content,
           coverImage: blog.coverImage,
-          date: new Date(blog.date),
+          date: blog.date ? new Date(blog.date) : new Date(),
+          status: blog.status || "draft",
           category: blog.category || "",
           metaTitle: blog.seo?.metaTitle || "",
           metaDescription: blog.seo?.metaDescription || "",
@@ -101,6 +110,7 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
           content: "",
           coverImage: "",
           date: new Date(),
+          status: "draft",
           category: "",
           metaTitle: "",
           metaDescription: "",
@@ -141,12 +151,13 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
         excerpt: data.excerpt,
         content: data.content,
         coverImage: data.coverImage,
-        date: format(data.date, "yyyy-MM-dd"),
+        date: data.date ? format(data.date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         author: {
           id: user?.id || blog?.author.id || "anonymous",
           name: user?.email?.split('@')[0] || blog?.author.name || "Anonymous",
           avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (user?.id || blog?.author.id || "anonymous"),
         },
+        status: data.status,
         category: data.category,
         seo: {
           metaTitle: data.metaTitle,
@@ -199,7 +210,7 @@ Summarize the key takeaways from this post.`;
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-background rounded-lg shadow p-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Tabs defaultValue="content" className="w-full">
@@ -285,7 +296,7 @@ Summarize the key takeaways from this post.`;
                 </div>
 
                 <div className="space-y-6">
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                  <div className="bg-secondary/50 p-4 rounded-lg space-y-4">
                     <h3 className="font-medium">Content Analysis</h3>
                     <div>
                       <p className="text-sm text-muted-foreground">Word count</p>
@@ -293,7 +304,7 @@ Summarize the key takeaways from this post.`;
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Readability</p>
-                      <div className="relative mt-1 h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div className="relative mt-1 h-2 w-full bg-muted rounded-full overflow-hidden">
                         <div 
                           className={cn(
                             "absolute h-full",
@@ -353,7 +364,8 @@ Summarize the key takeaways from this post.`;
                               className="absolute right-2 top-1/2 transform -translate-y-1/2"
                               onClick={() => {
                                 // In a real app, this would open an image selector
-                                alert("Image upload functionality would be integrated here");
+                                form.setValue("coverImage", "https://picsum.photos/800/400");
+                                setCoverImagePreview("https://picsum.photos/800/400");
                               }}
                             >
                               <Upload className="h-4 w-4" />
@@ -363,7 +375,7 @@ Summarize the key takeaways from this post.`;
                         <FormMessage />
 
                         {coverImagePreview ? (
-                          <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
+                          <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg border border-border">
                             <img
                               src={coverImagePreview}
                               alt="Cover preview"
@@ -372,10 +384,10 @@ Summarize the key takeaways from this post.`;
                             />
                           </div>
                         ) : (
-                          <div className="mt-2 flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                          <div className="mt-2 flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted/10">
                             <div className="text-center">
-                              <Image className="mx-auto h-12 w-12 text-gray-300" />
-                              <p className="mt-2 text-sm text-gray-500">No image preview</p>
+                              <Image className="mx-auto h-12 w-12 text-muted-foreground" />
+                              <p className="mt-2 text-sm text-muted-foreground">No image preview</p>
                             </div>
                           </div>
                         )}
@@ -396,6 +408,28 @@ Summarize the key takeaways from this post.`;
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="status">Publication Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger id="status">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="published">Published</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -449,7 +483,7 @@ Summarize the key takeaways from this post.`;
             </TabsContent>
             
             <TabsContent value="seo" className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="bg-secondary/50 p-4 rounded-lg mb-6">
                 <h3 className="font-medium flex items-center">
                   <Info className="h-4 w-4 mr-2" />
                   SEO Best Practices
@@ -479,7 +513,7 @@ Summarize the key takeaways from this post.`;
                       <p className="text-xs text-muted-foreground mt-1">
                         Characters: {field.value?.length || 0}/60
                         {field.value && field.value.length > 60 && (
-                          <span className="text-red-500"> (Too long)</span>
+                          <span className="text-destructive"> (Too long)</span>
                         )}
                       </p>
                       <FormMessage />
@@ -529,7 +563,7 @@ Summarize the key takeaways from this post.`;
                     <p className="text-xs text-muted-foreground mt-1">
                       Characters: {field.value?.length || 0}/160
                       {field.value && field.value.length > 160 && (
-                        <span className="text-red-500"> (Too long)</span>
+                        <span className="text-destructive"> (Too long)</span>
                       )}
                     </p>
                     <FormMessage />

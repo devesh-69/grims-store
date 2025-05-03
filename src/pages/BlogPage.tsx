@@ -1,13 +1,22 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import BlogCard from "@/components/blog/BlogCard";
-import { blogs } from "@/data/blogs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { fetchPublishedBlogs } from "@/api/blogs";
+import { Blog } from "@/types/blog";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BlogPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Fetch blogs using React Query
+  const { data: blogs = [], isLoading, error } = useQuery({
+    queryKey: ['blogs'],
+    queryFn: fetchPublishedBlogs,
+  });
 
   // Extract categories from blogs
   const categories = Array.from(
@@ -59,18 +68,39 @@ const BlogPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredBlogs.map((blog) => (
-              <BlogCard key={blog.id} blog={blog} />
-            ))}
-          </div>
-
-          {filteredBlogs.length === 0 && (
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-lg overflow-hidden border border-border">
+                  <Skeleton className="h-48 w-full" />
+                  <div className="p-4">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-full mb-1" />
+                    <Skeleton className="h-4 w-5/6 mb-1" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 border border-dashed border-border rounded-lg">
+              <h3 className="text-xl font-medium mb-2 text-destructive">Error loading blogs</h3>
+              <p className="text-muted-foreground">
+                {(error as Error).message || "Something went wrong. Please try again later."}
+              </p>
+            </div>
+          ) : filteredBlogs.length === 0 ? (
             <div className="text-center py-12 border border-dashed border-border rounded-lg">
               <h3 className="text-xl font-medium mb-2">No articles found</h3>
               <p className="text-muted-foreground">
                 Try adjusting your search to find articles.
               </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredBlogs.map((blog) => (
+                <BlogCard key={blog.id} blog={blog} />
+              ))}
             </div>
           )}
         </div>

@@ -90,6 +90,57 @@ export type Database = {
         }
         Relationships: []
       }
+      blogs: {
+        Row: {
+          author_id: string
+          category: string | null
+          content: string
+          cover_image: string
+          created_at: string
+          excerpt: string
+          id: string
+          published_at: string | null
+          seo: Json | null
+          slug: string
+          social_preview: Json | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          category?: string | null
+          content: string
+          cover_image: string
+          created_at?: string
+          excerpt: string
+          id?: string
+          published_at?: string | null
+          seo?: Json | null
+          slug: string
+          social_preview?: Json | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          category?: string | null
+          content?: string
+          cover_image?: string
+          created_at?: string
+          excerpt?: string
+          id?: string
+          published_at?: string | null
+          seo?: Json | null
+          slug?: string
+          social_preview?: Json | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -604,6 +655,29 @@ export type Database = {
       }
     }
     Views: {
+      blog_with_authors: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          avatar_url: string | null
+          category: string | null
+          content: string | null
+          cover_image: string | null
+          created_at: string | null
+          excerpt: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          published_at: string | null
+          seo: Json | null
+          slug: string | null
+          social_preview: Json | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       user_cohorts: {
         Row: {
           avg_spend: number | null

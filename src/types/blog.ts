@@ -14,6 +14,8 @@ export interface Blog {
   date: string;
   author: Author;
   category?: string;
+  status?: string;
+  publishedAt?: string;
   seo?: {
     metaTitle?: string;
     metaDescription?: string;

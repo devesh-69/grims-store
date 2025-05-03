@@ -7,12 +7,14 @@ export interface BlogFormData {
   excerpt: string;
   content: string;
   coverImage: string;
-  date: string;
+  date?: string;
+  publishedAt?: string;
   author: {
     id: string;
     name: string;
     avatar: string;
   };
+  status?: string;
   category?: string;
   seo?: {
     metaTitle?: string;

@@ -8,6 +8,7 @@ import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import BlogPage from "./pages/BlogPage";
+import BlogDetailsPage from "./pages/BlogDetailsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -25,9 +26,16 @@ import CreateReportPage from "./pages/CreateReportPage";
 import ScheduledReportsPage from "./pages/ScheduledReportsPage";
 import WishlistPage from "./pages/WishlistPage";
 import ImportWishlistPage from "./pages/ImportWishlistPage";
-import AdminSettingsPage from "./pages/AdminSettingsPage"; // Import the new settings page
+import AdminSettingsPage from "./pages/AdminSettingsPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -41,6 +49,7 @@ const App = () => (
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/:id" element={<ProductDetailsPage />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogDetailsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/wishlist" element={
