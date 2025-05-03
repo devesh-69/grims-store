@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Blog } from '@/types/blog';
 import { BlogFormData } from '@/types/blog-admin';
@@ -215,7 +216,7 @@ export const createBlog = async (blogData: BlogFormData): Promise<string> => {
     .replace(/\s+/g, '-');
 
   const { data, error } = await supabase
-    .from('blog_with_authors')
+    .from('blogs')  // Use the 'blogs' table instead of the view
     .insert({
       title: blogData.title,
       slug: `${slug}-${Date.now()}`, // Ensure uniqueness
@@ -258,7 +259,7 @@ export const updateBlog = async (id: string, blogData: BlogFormData): Promise<vo
   }
 
   const { error } = await supabase
-    .from('blog_with_authors')
+    .from('blogs')  // Use the 'blogs' table instead of the view
     .update({
       title: blogData.title,
       ...slugUpdate,
@@ -282,7 +283,7 @@ export const updateBlog = async (id: string, blogData: BlogFormData): Promise<vo
  */
 export const deleteBlog = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('blog_with_authors')
+    .from('blogs')  // Use the 'blogs' table instead of the view
     .delete()
     .eq('id', id);
 
@@ -294,7 +295,7 @@ export const deleteBlog = async (id: string): Promise<void> => {
  */
 export const publishBlog = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('blog_with_authors')
+    .from('blogs')  // Use the 'blogs' table instead of the view
     .update({
       status: 'published',
       published_at: new Date().toISOString(),
