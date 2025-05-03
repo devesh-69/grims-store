@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Home, ShoppingBag, BookOpen, User, Menu, X, LogOut, Search } from "lucide-react";
@@ -7,14 +7,25 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import Fuse from 'fuse.js';
-import { products } from "@/data/products";
+// import { products } from "@/data/products"; // Remove hardcoded products import
+import { useQuery } from "@tanstack/react-query"; // Import useQuery
+import { fetchProducts } from "@/api/products"; // Import fetchProducts API
+import { Product } from "@/types/product";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch products using React Query
+  const { data: products, isLoading: isLoadingProducts } = useQuery<Product[]> ({
+    queryKey: ['all-products'],
+    queryFn: fetchProducts,
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+  });
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -26,15 +37,21 @@ const Navbar = () => {
 
   const fuse = useMemo(() => {
     const options = {
-      keys: ['name', 'description', 'category'],
+      keys: ['name', 'short_description', 'detailed_description', 'category.name'], // Include relevant keys
       threshold: 0.3,
     };
-    return new Fuse(products, options);
-  }, [products]); // Depend on products data
+    // Initialize Fuse with fetched products (or an empty array if loading/error)
+    return new Fuse(products || [], options);
+  }, [products]); // Depend on fetched products data
+
+  // Effect to clear search results when products data changes (e.g., after refetch)
+  useEffect(() => {
+    setSearchResults([]);
+  }, [products]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.length > 1) {
+    if (query.length > 1 && products) { // Only search if products are loaded
       const results = fuse.search(query);
       setSearchResults(results.map(result => result.item));
     } else {
@@ -54,7 +71,12 @@ const Navbar = () => {
     { name: "Blog", path: "/blog", icon: <BookOpen className="mr-2 h-4 w-4" /> }
   ];
 
-  if (user && user.isAdmin) {
+  // Assuming user object has isAdmin property based on previous context
+  // If isAdmin check needs to be based on roles from 'user_roles' table, this needs adjustment
+  // For now, keeping as is based on the provided context.
+  const isAdmin = (user as any)?.isAdmin; // Type assertion based on previous usage
+
+  if (user && isAdmin) {
     navItems.push({ name: "Admin Dashboard", path: "/admin/dashboard", icon: <User className="mr-2 h-4 w-4" /> });
   }
 
@@ -88,10 +110,11 @@ const Navbar = () => {
               <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search products..."
+                placeholder={isLoadingProducts ? "Loading products..." : "Search products..."}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
+                disabled={isLoadingProducts} // Disable search while loading products
               />
               {searchResults.length > 0 && searchQuery.length > 1 && (
                 <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto top-full left-0">
@@ -119,16 +142,19 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 flex items-center justify-center space-x-2 px-0">
                    <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt="User Avatar" />
-                    <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+                    <AvatarImage src={user.avatar_url || undefined} alt="User Avatar" /> {/* Use user.avatar_url */}
+                    <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : <User className="h-5 w-5" />}</AvatarFallback> {/* Use first letter of email as fallback */}
                   </Avatar>
-                  <span className="text-sm font-medium hidden sm:block">{user.email}</span>
+                  {/* Display user's first name or email */}
+                  <span className="text-sm font-medium hidden sm:block">{user.user_metadata?.first_name || user.email}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.email}</p>
+                     {/* Display user's name or email and full email */}
+                    <p className="text-sm font-medium leading-none">{user.user_metadata?.first_name || user.email}</p>
+                    {user.user_metadata?.first_name && (<p className="text-xs leading-none text-muted-foreground">{user.email}</p>)}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -179,10 +205,11 @@ const Navbar = () => {
                 <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder={isLoadingProducts ? "Loading products..." : "Search products..."}
                   className="pl-8"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
+                  disabled={isLoadingProducts} // Disable search while loading products
                 />
                 {searchResults.length > 0 && searchQuery.length > 1 && (
                   <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto top-full left-0">
@@ -195,9 +222,19 @@ const Navbar = () => {
                         <img src={product.image_url || "/placeholder.svg"} alt={product.name} className="w-8 h-8 object-cover rounded-md mr-2" />
                         {product.name}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  }
+
+                  {/* Add a loading indicator or message if products are still loading */}
+                  {isLoadingProducts && searchResults.length === 0 && searchQuery.length > 1 && (
+                     <div className="px-4 py-2 text-muted-foreground">Loading...</div>
+                  )}
+
+                  {!isLoadingProducts && searchResults.length === 0 && searchQuery.length > 1 && (
+                     <div className="px-4 py-2 text-muted-foreground">No products found.</div>
+                  )}
+                </div>
+              )}
              </div>
             {navItems.map((item) => (
               <Link

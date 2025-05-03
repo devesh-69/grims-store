@@ -6,17 +6,24 @@ import ProductCard from "@/components/products/ProductCard";
 import BlogCard from "@/components/blog/BlogCard";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFeaturedProducts } from "@/api/products";
-import { blogs } from "@/data/blogs";
+// import { blogs } from "@/data/blogs"; // Remove hardcoded blogs import
 import { Loader2 } from "lucide-react";
 import ThreeDHero from "@/components/hero/ThreeDHero";
+import { fetchPublishedBlogs } from "@/api/blogs"; // Import the API function
 
 const HomePage = () => {
-  const { data: featuredProducts = [], isLoading } = useQuery({
+  const { data: featuredProducts = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['featured-products'],
     queryFn: fetchFeaturedProducts
   });
 
-  const latestBlogs = blogs.slice(0, 3);
+  // Fetch latest blogs using API
+  const { data: publishedBlogs = [], isLoading: isLoadingBlogs } = useQuery({
+    queryKey: ['published-blogs'],
+    queryFn: fetchPublishedBlogs
+  });
+
+  const latestBlogs = publishedBlogs.slice(0, 3); // Take the first 3 published blogs
 
   return (
     <Layout>
@@ -57,7 +64,7 @@ const HomePage = () => {
             </Link>
           </div>
 
-          {isLoading ? (
+          {isLoadingProducts ? (
             <div className="flex justify-center items-center py-24">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
@@ -97,11 +104,24 @@ const HomePage = () => {
               View All <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestBlogs.map((blog) => (
-              <BlogCard key={blog.id} blog={blog} />
-            ))}
-          </div>
+          {isLoadingBlogs ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : latestBlogs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {latestBlogs.map((blog) => (
+                <BlogCard key={blog.id} blog={blog} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 border border-dashed border-border rounded-lg">
+              <h3 className="text-xl font-medium mb-2">No articles published yet.</h3>
+              <p className="text-muted-foreground">
+                Check back later for the latest updates!
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
