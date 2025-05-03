@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Blog } from '@/types/blog';
 import { BlogFormData } from '@/types/blog-admin';
@@ -23,12 +22,7 @@ export const fetchPublishedBlogs = async (): Promise<Blog[]> => {
       author_id,
       seo,
       social_preview,
-      profiles:author_id (
-        id,
-        first_name,
-        last_name,
-        avatar_url
-      )
+      profiles(id, first_name, last_name, avatar_url)
     `)
     .eq('status', 'published')
     .lte('published_at', new Date().toISOString())
@@ -46,12 +40,14 @@ export const fetchPublishedBlogs = async (): Promise<Blog[]> => {
     date: item.published_at || item.created_at,
     category: item.category,
     author: {
-      id: item.profiles.id,
-      name: `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Anonymous',
-      avatar: item.profiles.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      id: item.author_id,
+      name: item.profiles ? 
+        `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Anonymous' : 
+        'Anonymous',
+      avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
-    seo: item.seo,
-    socialPreview: item.social_preview
+    seo: item.seo as Blog['seo'],
+    socialPreview: item.social_preview as Blog['socialPreview']
   }));
 };
 
@@ -75,12 +71,7 @@ export const fetchBlogBySlug = async (slug: string): Promise<Blog | null> => {
       author_id,
       seo,
       social_preview,
-      profiles:author_id (
-        id,
-        first_name,
-        last_name,
-        avatar_url
-      )
+      profiles(id, first_name, last_name, avatar_url)
     `)
     .eq('slug', slug)
     .eq('status', 'published')
@@ -101,12 +92,14 @@ export const fetchBlogBySlug = async (slug: string): Promise<Blog | null> => {
     date: data.published_at || data.created_at,
     category: data.category,
     author: {
-      id: data.profiles.id,
-      name: `${data.profiles.first_name || ''} ${data.profiles.last_name || ''}`.trim() || 'Anonymous',
-      avatar: data.profiles.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      id: data.author_id,
+      name: data.profiles ? 
+        `${data.profiles.first_name || ''} ${data.profiles.last_name || ''}`.trim() || 'Anonymous' : 
+        'Anonymous',
+      avatar: data.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
-    seo: data.seo,
-    socialPreview: data.social_preview
+    seo: data.seo as Blog['seo'],
+    socialPreview: data.social_preview as Blog['socialPreview']
   };
 };
 
@@ -131,12 +124,7 @@ export const fetchAllBlogs = async (): Promise<Blog[]> => {
       author_id,
       seo,
       social_preview,
-      profiles:author_id (
-        id,
-        first_name,
-        last_name,
-        avatar_url
-      )
+      profiles(id, first_name, last_name, avatar_url)
     `)
     .order('updated_at', { ascending: false });
 
@@ -153,12 +141,14 @@ export const fetchAllBlogs = async (): Promise<Blog[]> => {
     status: item.status,
     category: item.category,
     author: {
-      id: item.profiles.id,
-      name: `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Anonymous',
-      avatar: item.profiles.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      id: item.author_id,
+      name: item.profiles ? 
+        `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Anonymous' : 
+        'Anonymous',
+      avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
-    seo: item.seo,
-    socialPreview: item.social_preview
+    seo: item.seo as Blog['seo'],
+    socialPreview: item.social_preview as Blog['socialPreview']
   }));
 };
 
@@ -183,12 +173,7 @@ export const fetchBlogById = async (id: string): Promise<Blog | null> => {
       author_id,
       seo,
       social_preview,
-      profiles:author_id (
-        id,
-        first_name,
-        last_name,
-        avatar_url
-      )
+      profiles(id, first_name, last_name, avatar_url)
     `)
     .eq('id', id)
     .single();
@@ -208,12 +193,14 @@ export const fetchBlogById = async (id: string): Promise<Blog | null> => {
     status: data.status,
     category: data.category,
     author: {
-      id: data.profiles.id,
-      name: `${data.profiles.first_name || ''} ${data.profiles.last_name || ''}`.trim() || 'Anonymous',
-      avatar: data.profiles.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      id: data.author_id,
+      name: data.profiles ? 
+        `${data.profiles.first_name || ''} ${data.profiles.last_name || ''}`.trim() || 'Anonymous' : 
+        'Anonymous',
+      avatar: data.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
     },
-    seo: data.seo,
-    socialPreview: data.social_preview
+    seo: data.seo as Blog['seo'],
+    socialPreview: data.social_preview as Blog['socialPreview']
   };
 };
 
