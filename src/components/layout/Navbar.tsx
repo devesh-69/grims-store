@@ -60,13 +60,30 @@ const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center">
-          <span className="text-xl font-bold text-primary">Grim's Store</span>
-        </Link>
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Left section: Logo and Nav Items */}
+        <div className="flex items-center space-x-6">
+          <Link to="/" className="flex items-center">
+            <span className="text-xl font-bold text-primary">Grim's Store</span>
+          </Link>
 
-        {/* Desktop Nav, Search, and Wishlist */}
-        <div className="hidden md:flex items-center space-x-6 flex-grow justify-end">
+          {/* Desktop Nav Items */}
+          <div className="hidden md:flex items-center space-x-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className="flex items-center text-foreground/80 hover:text-primary transition-colors"
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Right section: Search, Wishlist, and Auth/User */}
+        <div className="hidden md:flex items-center space-x-6">
            <div className="relative w-full max-w-sm">
               <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -96,17 +113,6 @@ const Navbar = () => {
                  <ShoppingBag className="h-5 w-5" />
                </Button>
              )}
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className="flex items-center text-foreground/80 hover:text-primary transition-colors"
-            >
-              {item.icon}
-              {item.name}
-            </Link>
-          ))}
-
           {/* Auth/User section (Desktop) */}
           {user ? (
             <DropdownMenu>
@@ -162,8 +168,6 @@ const Navbar = () => {
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
         </div>
-
-
       </div>
 
       {/* Mobile menu */}
