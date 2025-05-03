@@ -65,7 +65,7 @@ const AdminNav = () => {
   return (
     <div
       className={cn(
-        "h-full bg-secondary/50 pt-4 border-r relative transition-all duration-300 ease-in-out",
+        "h-full bg-background/95 pt-4 border-r border-border relative transition-all duration-300 ease-in-out",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
@@ -78,7 +78,7 @@ const AdminNav = () => {
             )}
           >
             {!isCollapsed && (
-              <Link to="/admin" className="font-semibold text-lg">
+              <Link to="/admin" className="font-semibold text-lg text-foreground">
                 Admin Panel
               </Link>
             )}
@@ -100,13 +100,16 @@ const AdminNav = () => {
                   asChild
                   className={cn(
                     "w-full justify-start",
-                    isCollapsed ? "justify-center px-0" : "px-3"
+                    isCollapsed ? "justify-center px-0" : "px-3",
+                    isActive 
+                      ? "bg-primary/20 text-primary border border-primary/30" 
+                      : "text-foreground hover:bg-primary/10 hover:text-primary"
                   )}
                 >
                   <Link to={link.path}>
                     <span
                       className={cn(
-                        "mr-2 h-5 w-5",
+                        "h-5 w-5",
                         isActive
                           ? "text-primary"
                           : "text-muted-foreground group-hover:text-foreground"
@@ -114,7 +117,7 @@ const AdminNav = () => {
                     >
                       {link.icon}
                     </span>
-                    {!isCollapsed && <span>{link.name}</span>}
+                    {!isCollapsed && <span className="ml-3">{link.name}</span>}
                   </Link>
                 </Button>
               );
@@ -126,7 +129,7 @@ const AdminNav = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="w-full flex justify-center"
+            className="w-full flex justify-center text-muted-foreground hover:text-primary hover:bg-primary/10"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
             {isCollapsed ? (

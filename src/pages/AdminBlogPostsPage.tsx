@@ -151,8 +151,8 @@ const AdminBlogPostsPage = () => {
             onCancel={handleCancelEdit}
           />
         ) : (
-          <Card className="bg-background rounded-lg shadow-lg">
-            <CardHeader className="pb-3">
+          <Card className="bg-background/30 rounded-lg border border-border shadow-lg backdrop-blur-sm">
+            <CardHeader className="pb-3 border-b border-border/40">
               <CardTitle className="text-foreground">Blog Posts</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
@@ -161,7 +161,7 @@ const AdminBlogPostsPage = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search blogs..."
-                    className="pl-10 text-foreground border-border shadow-sm bg-secondary"
+                    className="pl-10 text-foreground bg-background/50 border-border"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -174,7 +174,7 @@ const AdminBlogPostsPage = () => {
                   <p className="mt-2 text-muted-foreground">Loading blog posts...</p>
                 </div>
               ) : error ? (
-                <div className="text-center py-12 border border-dashed border-border rounded-lg bg-background">
+                <div className="text-center py-12 border border-dashed border-border rounded-lg bg-background/20">
                   <FileText className="h-12 w-12 mx-auto text-destructive" />
                   <h2 className="mt-4 text-xl font-semibold text-foreground">Error loading blog posts</h2>
                   <p className="text-muted-foreground mt-2">
@@ -182,7 +182,7 @@ const AdminBlogPostsPage = () => {
                   </p>
                 </div>
               ) : filteredBlogs.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-border rounded-lg bg-background">
+                <div className="text-center py-12 border border-dashed border-border rounded-lg bg-background/20">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
                   <h2 className="mt-4 text-xl font-semibold text-foreground">No blog posts yet</h2>
                   <p className="text-muted-foreground mt-2">

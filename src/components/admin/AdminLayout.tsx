@@ -13,21 +13,21 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { signOut, user } = useAuth();
   
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gray-100">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       <AdminNav />
       
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 h-16 shrink-0">
+        <header className="bg-background border-b border-border h-16 shrink-0">
           <div className="flex h-full items-center justify-between px-4">
-            <h2 className="text-xl font-semibold">Admin Dashboard</h2>
+            <h2 className="text-xl font-semibold text-foreground">Admin Dashboard</h2>
             
             <div className="flex items-center gap-4">
               <div className="hidden md:block">
-                <p className="text-sm font-medium">{user?.email}</p>
+                <p className="text-sm font-medium text-foreground">{user?.email}</p>
                 <p className="text-xs text-muted-foreground">Administrator</p>
               </div>
               
-              <Button variant="ghost" size="sm" onClick={signOut}>
+              <Button variant="ghost" size="sm" onClick={signOut} className="text-foreground hover:bg-primary/20 hover:text-primary">
                 <LogOut className="h-4 w-4 mr-2" />
                 <span className="hidden md:inline">Sign out</span>
               </Button>
@@ -35,7 +35,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
         </header>
         
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-background/80">
           {children}
         </main>
       </div>

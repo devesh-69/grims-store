@@ -262,21 +262,33 @@ const AdminUsersPage = () => {
       <div className="container mx-auto p-4 space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">User Management</h1>
+            <h1 className="text-3xl font-bold text-foreground">User Management</h1>
             <p className="text-muted-foreground">
               Manage, filter, and take actions on your users
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilters(!showFilters)}
+              className="border-primary/30 text-foreground hover:bg-primary/10 hover:text-primary"
+            >
               <Filter className="mr-2 h-4 w-4" />
               {showFilters ? "Hide Filters" : "Show Filters"}
             </Button>
-            <Button variant="outline" onClick={handleExportUsers} disabled={isLoading}>
+            <Button 
+              variant="outline"
+              onClick={handleExportUsers} 
+              disabled={isLoading}
+              className="border-primary/30 text-foreground hover:bg-primary/10 hover:text-primary"
+            >
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <Button variant="default">
+            <Button 
+              variant="default"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               <UserPlus className="mr-2 h-4 w-4" />
               Add User
             </Button>
@@ -288,10 +300,10 @@ const AdminUsersPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {showFilters && (
             <div className="md:col-span-1">
-              <Tabs defaultValue="filters">
-                <TabsList className="w-full">
-                  <TabsTrigger value="filters" className="flex-1">Filters</TabsTrigger>
-                  <TabsTrigger value="segments" className="flex-1">Segments</TabsTrigger>
+              <Tabs defaultValue="filters" className="bg-background/30 rounded-lg border border-border p-1">
+                <TabsList className="w-full bg-background/50">
+                  <TabsTrigger value="filters" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Filters</TabsTrigger>
+                  <TabsTrigger value="segments" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Segments</TabsTrigger>
                 </TabsList>
                 <TabsContent value="filters" className="mt-4">
                   <UserFiltersPanel
@@ -312,10 +324,10 @@ const AdminUsersPage = () => {
           )}
 
           <div className={`${showFilters ? "md:col-span-3" : "md:col-span-4"}`}>
-            <div className="bg-secondary/50 rounded-lg shadow">
+            <div className="bg-background/30 border border-border rounded-lg shadow backdrop-blur-sm">
               {selectedUsers.length > 0 && (
-                <div className="flex items-center justify-between p-4 bg-accent/20 rounded-t-lg">
-                  <p className="text-sm font-medium">
+                <div className="flex items-center justify-between p-4 bg-primary/10 rounded-t-lg border-b border-border">
+                  <p className="text-sm font-medium text-foreground">
                     {selectedUsers.length} users selected
                   </p>
                   <div className="flex gap-2">
@@ -323,6 +335,7 @@ const AdminUsersPage = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleBulkAction("activate")}
+                      className="border-primary/30 hover:bg-primary/10 hover:text-primary"
                     >
                       <UserCheck className="mr-2 h-4 w-4" />
                       Activate
@@ -331,6 +344,7 @@ const AdminUsersPage = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleBulkAction("deactivate")}
+                      className="border-primary/30 hover:bg-primary/10 hover:text-primary"
                     >
                       <UsersRound className="mr-2 h-4 w-4" />
                       Deactivate

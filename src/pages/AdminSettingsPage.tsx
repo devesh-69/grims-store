@@ -127,7 +127,7 @@ const AdminSettingsPage = () => {
             <Button 
               variant="outline" 
               onClick={resetSettings}
-              className="flex items-center"
+              className="flex items-center border-primary/30 text-foreground hover:bg-primary/10 hover:text-primary"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Reset
@@ -138,13 +138,13 @@ const AdminSettingsPage = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <Tabs defaultValue="basic" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2 md:w-[400px] bg-secondary/50">
+              <TabsList className="grid w-full grid-cols-2 md:w-[400px] bg-background/50">
                 <TabsTrigger value="basic" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Basic Settings</TabsTrigger>
                 <TabsTrigger value="advanced" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Advanced Settings</TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4">
-                <Card className="border-border bg-card/60 backdrop-blur-sm">
+                <Card className="border-border bg-background/30 backdrop-blur-sm">
                   <CardHeader className="border-b border-border/40">
                     <CardTitle className="text-foreground">General</CardTitle>
                     <CardDescription className="text-muted-foreground">
@@ -161,7 +161,7 @@ const AdminSettingsPage = () => {
                           <FormControl>
                             <Input 
                               {...field} 
-                              className="bg-secondary/50 border-border text-foreground"
+                              className="bg-background/50 border-border text-foreground focus-visible:ring-primary"
                             />
                           </FormControl>
                           <FormDescription className="text-muted-foreground">
@@ -183,11 +183,11 @@ const AdminSettingsPage = () => {
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger className="bg-secondary/50 border-border text-foreground">
+                              <SelectTrigger className="bg-background/50 border-border text-foreground focus-visible:ring-primary">
                                 <SelectValue placeholder="Select a language" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="bg-background border-border">
                               <SelectItem value="en">English</SelectItem>
                               <SelectItem value="es">Spanish</SelectItem>
                               <SelectItem value="fr">French</SelectItem>
@@ -237,7 +237,7 @@ const AdminSettingsPage = () => {
                         control={form.control}
                         name="emailNotifications"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-card/60">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-background/30">
                             <div className="space-y-0.5">
                               <FormLabel className="text-foreground">Email Notifications</FormLabel>
                               <FormDescription className="text-muted-foreground">
@@ -248,6 +248,7 @@ const AdminSettingsPage = () => {
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                             </FormControl>
                           </FormItem>
@@ -258,7 +259,7 @@ const AdminSettingsPage = () => {
                         control={form.control}
                         name="darkMode"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-card/60">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-background/30">
                             <div className="space-y-0.5">
                               <FormLabel className="text-foreground">Dark Mode</FormLabel>
                               <FormDescription className="text-muted-foreground">
@@ -269,6 +270,7 @@ const AdminSettingsPage = () => {
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                             </FormControl>
                           </FormItem>
@@ -280,7 +282,7 @@ const AdminSettingsPage = () => {
               </TabsContent>
 
               <TabsContent value="advanced" className="space-y-4">
-                <Card className="border-border bg-card/60 backdrop-blur-sm">
+                <Card className="border-border bg-background/30 backdrop-blur-sm">
                   <CardHeader className="border-b border-border/40">
                     <CardTitle className="text-foreground">Advanced Settings</CardTitle>
                     <CardDescription className="text-muted-foreground">
@@ -293,7 +295,7 @@ const AdminSettingsPage = () => {
                         control={form.control}
                         name="maintenanceMode"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-card/60">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-background/30">
                             <div className="space-y-0.5">
                               <FormLabel className="text-foreground">Maintenance Mode</FormLabel>
                               <FormDescription className="text-muted-foreground">
@@ -304,6 +306,7 @@ const AdminSettingsPage = () => {
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                             </FormControl>
                           </FormItem>
@@ -314,7 +317,7 @@ const AdminSettingsPage = () => {
                         control={form.control}
                         name="analyticsEnabled"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-card/60">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-background/30">
                             <div className="space-y-0.5">
                               <FormLabel className="text-foreground">Analytics</FormLabel>
                               <FormDescription className="text-muted-foreground">
@@ -325,6 +328,7 @@ const AdminSettingsPage = () => {
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                             </FormControl>
                           </FormItem>
@@ -335,7 +339,7 @@ const AdminSettingsPage = () => {
                         control={form.control}
                         name="autoSave"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-card/60">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-background/30">
                             <div className="space-y-0.5">
                               <FormLabel className="text-foreground">Auto Save</FormLabel>
                               <FormDescription className="text-muted-foreground">
@@ -346,6 +350,7 @@ const AdminSettingsPage = () => {
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                             </FormControl>
                           </FormItem>
@@ -356,7 +361,7 @@ const AdminSettingsPage = () => {
                         control={form.control}
                         name="debugMode"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-card/60">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 bg-background/30">
                             <div className="space-y-0.5">
                               <FormLabel className="text-foreground">Debug Mode</FormLabel>
                               <FormDescription className="text-muted-foreground">
@@ -367,6 +372,7 @@ const AdminSettingsPage = () => {
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                             </FormControl>
                           </FormItem>
