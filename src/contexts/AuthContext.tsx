@@ -2,9 +2,10 @@
 import * as React from 'react';
 import { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { User } from '@/types/auth';
 
 interface AuthContextProps {
   session: Session | null;
@@ -17,6 +18,9 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
+// List of admin emails - in a real-world scenario, this would be stored in and checked against the database
+const ADMIN_EMAILS = ['admin@example.com'];
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -28,7 +32,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          // Check if the user is an admin based on their email
+          const userWithRole: User = {
+            ...currentSession.user,
+            isAdmin: ADMIN_EMAILS.includes(currentSession.user.email || '')
+          };
+          setUser(userWithRole);
+        } else {
+          setUser(null);
+        }
         
         if (event === 'SIGNED_IN') {
           toast.success('Signed in successfully');
@@ -41,7 +55,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+      
+      if (currentSession?.user) {
+        // Check if the user is an admin based on their email
+        const userWithRole: User = {
+          ...currentSession.user,
+          isAdmin: ADMIN_EMAILS.includes(currentSession.user.email || '')
+        };
+        setUser(userWithRole);
+      } else {
+        setUser(null);
+      }
+      
       setLoading(false);
     });
 
