@@ -126,10 +126,16 @@ const BlogDetailsPage = () => {
               {format(new Date(blog.date), 'MMMM d, yyyy')}
             </span>
             
-            {blog.category && (
-              <span className="flex items-center">
-                <Tag className="h-4 w-4 mr-1" />
-                <Badge variant="secondary">{blog.category}</Badge>
+            {blog.category && blog.category.length > 0 && (
+              <span className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                {Array.isArray(blog.category) ? (
+                  blog.category.map((cat, index) => (
+                    <Badge key={index} variant="secondary">{cat}</Badge>
+                  ))
+                ) : (
+                  <Badge variant="secondary">{blog.category}</Badge>
+                )}
               </span>
             )}
           </div>
@@ -143,9 +149,9 @@ const BlogDetailsPage = () => {
           </div>
 
           <div className="prose prose-lg dark:prose-invert max-w-none">
-            {/* Render blog content - for now, just use dangerouslySetInnerHTML */}
+            {/* Fix: Use blog.body instead of blog.content which doesn't exist */}
             <div 
-              dangerouslySetInnerHTML={{ __html: blog.content.replace(/\n/g, '<br />') }} 
+              dangerouslySetInnerHTML={{ __html: blog.body.replace(/\n/g, '<br />') }} 
             />
           </div>
         </div>

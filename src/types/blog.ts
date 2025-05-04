@@ -19,6 +19,7 @@ export interface Blog {
   publishedAt?: string;
   featured?: boolean;
   commentsEnabled?: boolean;
+  content?: string; // Backward compatibility
   seo?: {
     metaTitle?: string;
     metaDescription?: string;

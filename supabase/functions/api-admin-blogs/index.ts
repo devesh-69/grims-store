@@ -47,10 +47,10 @@ serve(async (req) => {
       }
     }
 
-    // Check if user is authenticated
-    const { data: { user } } = await supabaseClient.auth.getUser()
+    // Get the current user from the auth context
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
     
-    if (!user) {
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
@@ -87,29 +87,31 @@ serve(async (req) => {
       
       // Generate a slug from the title if not provided
       const slug = blogData.slug || generateSlug(blogData.title);
-
+      
+      // Fix: Use the authenticated user's ID directly instead of trying to access the users table
       const { data, error } = await supabaseClient
         .from('blogs')
         .insert({
           title: blogData.title,
           slug: slug,
           excerpt: blogData.excerpt,
-          body: blogData.body,
+          body: blogData.body || '',  // Ensure body is never null
           cover_image_url: blogData.coverImage,
           published_at: blogData.status === 'published' ? new Date().toISOString() : null,
-          author_id: blogData.author.id || user.id,
+          author_id: user.id, // Use the authenticated user's ID
           status: blogData.status || 'draft',
           category: blogData.category || [],
           featured: blogData.featured || false,
           comments_enabled: blogData.commentsEnabled || true,
-          meta_title: blogData.seo?.metaTitle || '',
-          meta_description: blogData.seo?.metaDescription || '',
+          // Ensure SEO data is correctly saved
+          meta_title: blogData.seo?.metaTitle || blogData.title || '',
+          meta_description: blogData.seo?.metaDescription || blogData.excerpt || '',
           canonical_url: blogData.seo?.canonicalUrl || '',
           keywords: blogData.seo?.keywords || [],
-          og_title: blogData.socialPreview?.ogTitle || '',
-          og_description: blogData.socialPreview?.ogDescription || '',
-          twitter_title: blogData.socialPreview?.twitterTitle || '',
-          twitter_description: blogData.socialPreview?.twitterDescription || ''
+          og_title: blogData.socialPreview?.ogTitle || blogData.title || '',
+          og_description: blogData.socialPreview?.ogDescription || blogData.excerpt || '',
+          twitter_title: blogData.socialPreview?.twitterTitle || blogData.title || '',
+          twitter_description: blogData.socialPreview?.twitterDescription || blogData.excerpt || ''
         })
         .select('id')
         .single();
@@ -145,21 +147,22 @@ serve(async (req) => {
           title: blogData.title,
           slug: slug,
           excerpt: blogData.excerpt,
-          body: blogData.body,
+          body: blogData.body || '',  // Ensure body is never null
           cover_image_url: blogData.coverImage,
           published_at: publishedAt,
           status: blogData.status,
           category: blogData.category || [],
           featured: blogData.featured || false,
           comments_enabled: blogData.commentsEnabled || true,
-          meta_title: blogData.seo?.metaTitle || '',
-          meta_description: blogData.seo?.metaDescription || '',
+          // Ensure SEO data is correctly updated
+          meta_title: blogData.seo?.metaTitle || blogData.title || '',
+          meta_description: blogData.seo?.metaDescription || blogData.excerpt || '',
           canonical_url: blogData.seo?.canonicalUrl || '',
           keywords: blogData.seo?.keywords || [],
-          og_title: blogData.socialPreview?.ogTitle || '',
-          og_description: blogData.socialPreview?.ogDescription || '',
-          twitter_title: blogData.socialPreview?.twitterTitle || '',
-          twitter_description: blogData.socialPreview?.twitterDescription || '',
+          og_title: blogData.socialPreview?.ogTitle || blogData.title || '',
+          og_description: blogData.socialPreview?.ogDescription || blogData.excerpt || '',
+          twitter_title: blogData.socialPreview?.twitterTitle || blogData.title || '',
+          twitter_description: blogData.socialPreview?.twitterDescription || blogData.excerpt || '',
           updated_at: new Date().toISOString()
         })
         .eq('id', blogId);
