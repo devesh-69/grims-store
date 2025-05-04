@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Tables, TablesInsert } from '@/integrations/supabase/types';
 
@@ -27,66 +28,80 @@ export type ProductReviewsApiResponse = {
  */
 export const fetchProductReviews = async (productId: string): Promise<ProductReviewsApiResponse> => {
   // Fetch the list of reviews with user and rating information
-  const { data: reviewsData, error: reviewsError } = await supabase
+  const reviewsQuery = await supabase
     .from('reviews')
-    .select(
-      `
+    .select(`
       id,
       content,
       created_at,
-      ratings!inner ( score ),
-      profiles!inner ( id, first_name, last_name, avatar_url )
-      `
-    )
+      rating_id,
+      user_id,
+      product_id
+    `)
     .eq('product_id', productId)
     .order('created_at', { ascending: false });
-
-  if (reviewsError) {
-    console.error('Error fetching reviews:', reviewsError);
-    throw reviewsError;
+    
+  if (reviewsQuery.error) {
+    console.error('Error fetching reviews:', reviewsQuery.error);
+    throw reviewsQuery.error;
   }
-
-  // Fetch the aggregate rating data (count and average)
-  const { data: ratingsData, error: ratingsError, count } = await supabase
+  
+  const reviewsData = reviewsQuery.data;
+  
+  // Fetch ratings separately
+  const ratingsQuery = await supabase
     .from('ratings')
-    .select('score', { count: 'exact' })
+    .select('id, score, user_id')
     .eq('product_id', productId);
-
-  if (ratingsError) {
-    console.error('Error fetching ratings aggregate:', ratingsError);
-    // Proceed with reviews data even if ratings aggregate fails, setting count/avg to 0
-    return {
-      totalReviews: 0,
-      averageRating: 0,
-      reviews: reviewsData.map((review) => ({
-        id: review.id,
-        content: review.content,
-        date: review.created_at,
-        score: (review.ratings as { score: number }).score,
-        user: {
-          id: (review.profiles as { id: string }).id,
-          name: `${(review.profiles as { first_name: string; last_name: string }).first_name || ''} ${(review.profiles as { first_name: string; last_name: string }).last_name || ''}`.trim() || 'Anonymous',
-          avatar: (review.profiles as { avatar_url: string }).avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous', // Default avatar
-        },
-      })),
-    };
+    
+  if (ratingsQuery.error) {
+    console.error('Error fetching ratings:', ratingsQuery.error);
+    throw ratingsQuery.error;
   }
+  
+  const ratingsData = ratingsQuery.data;
+  
+  // Fetch user profiles
+  const userIds = [...new Set([
+    ...reviewsData.map(review => review.user_id),
+    ...ratingsData.map(rating => rating.user_id)
+  ])];
+  
+  const profilesQuery = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, avatar_url')
+    .in('id', userIds);
+    
+  if (profilesQuery.error) {
+    console.error('Error fetching profiles:', profilesQuery.error);
+    throw profilesQuery.error;
+  }
+  
+  const profilesData = profilesQuery.data;
+  
+  // Calculate average rating
+  const totalReviews = ratingsData.length;
+  const averageRating = totalReviews > 0 
+    ? ratingsData.reduce((sum, rating) => sum + rating.score, 0) / totalReviews 
+    : 0;
 
-  const totalReviews = count || 0;
-  const averageRating = ratingsData ? ratingsData.reduce((sum, rating) => sum + rating.score, 0) / ratingsData.length || 0 : 0;
-
-
-  const reviews: ProductReview[] = reviewsData.map((review) => ({
-    id: review.id,
-    content: review.content,
-    date: review.created_at,
-    score: (review.ratings as { score: number }).score, // Type assertion for nested data
-    user: {
-      id: (review.profiles as { id: string }).id, // Type assertion
-      name: `${(review.profiles as { first_name: string; last_name: string }).first_name || ''} ${(review.profiles as { first_name: string; last_name: string }).last_name || ''}`.trim() || 'Anonymous',
-      avatar: (review.profiles as { avatar_url: string }).avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous', // Default avatar
-    },
-  }));
+  // Combine the data to form complete reviews
+  const reviews: ProductReview[] = reviewsData.map(review => {
+    const rating = ratingsData.find(r => r.id === review.rating_id);
+    const profile = profilesData.find(p => p.id === review.user_id);
+    
+    return {
+      id: review.id,
+      content: review.content,
+      date: review.created_at,
+      score: rating?.score || 0,
+      user: {
+        id: profile?.id || '',
+        name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Anonymous',
+        avatar: profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+      }
+    };
+  });
 
   return {
     totalReviews,
@@ -111,7 +126,31 @@ export const createProductRating = async (productId: string, score: number): Pro
     throw new Error('Rating score must be between 1 and 5.');
   }
 
-  const ratingData: TablesInsert<'ratings'> = {
+  // Check if user already rated this product
+  const { data: existingRating } = await supabase
+    .from('ratings')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('product_id', productId)
+    .single();
+
+  if (existingRating) {
+    // Update existing rating
+    const { error } = await supabase
+      .from('ratings')
+      .update({ score })
+      .eq('id', existingRating.id);
+
+    if (error) {
+      console.error('Error updating rating:', error);
+      throw error;
+    }
+    
+    return existingRating.id;
+  }
+
+  // Create new rating
+  const ratingData = {
     user_id: user.id,
     product_id: productId,
     score: score,
@@ -147,7 +186,30 @@ export const createProductReview = async (productId: string, ratingId: string, c
     throw new Error('Review content cannot be empty.');
   }
 
-  const reviewData: TablesInsert<'reviews'> = {
+  // Check if a review already exists for this rating
+  const { data: existingReview } = await supabase
+    .from('reviews')
+    .select('id')
+    .eq('rating_id', ratingId)
+    .single();
+
+  if (existingReview) {
+    // Update existing review
+    const { error } = await supabase
+      .from('reviews')
+      .update({ content: content.trim() })
+      .eq('id', existingReview.id);
+
+    if (error) {
+      console.error('Error updating review:', error);
+      throw error;
+    }
+    
+    return;
+  }
+
+  // Create new review
+  const reviewData = {
     user_id: user.id,
     product_id: productId,
     rating_id: ratingId,
