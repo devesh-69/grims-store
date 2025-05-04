@@ -344,7 +344,7 @@ export const createBlog = async (blogData: BlogFormData): Promise<string> => {
       cover_image_url: blogData.coverImage,
       published_at: blogData.status === 'published' ? new Date().toISOString() : null,
       author_id: blogData.author.id,
-      status: blogData.status || 'draft',
+      status: blogData.status as 'draft' | 'published' || 'draft', // Fix the type issue
       category: blogData.category || [],
       featured: blogData.featured || false,
       comments_enabled: blogData.commentsEnabled || true,
@@ -386,7 +386,7 @@ export const updateBlog = async (id: string, blogData: BlogFormData): Promise<vo
       body: blogData.body,
       cover_image_url: blogData.coverImage,
       published_at: publishedAt,
-      status: blogData.status,
+      status: blogData.status as 'draft' | 'published', // Fix the type issue
       category: blogData.category || [],
       featured: blogData.featured || false,
       comments_enabled: blogData.commentsEnabled || true,
