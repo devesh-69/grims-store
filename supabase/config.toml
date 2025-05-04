@@ -8,3 +8,6 @@ schemas = ["public", "storage", "graphql_public"]
 
 [functions.api-blogs]
 verify_jwt = false
+
+[functions.api-admin-blogs]
+verify_jwt = false
