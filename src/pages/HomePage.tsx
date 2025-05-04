@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -6,7 +7,6 @@ import ProductCard from "@/components/products/ProductCard";
 import BlogCard from "@/components/blog/BlogCard";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFeaturedProducts } from "@/api/products";
-// import { blogs } from "@/data/blogs"; // Remove hardcoded blogs import
 import { Loader2 } from "lucide-react";
 import ThreeDHero from "@/components/hero/ThreeDHero";
 import { fetchPublishedBlogs } from "@/api/blogs"; // Import the API function
@@ -20,10 +20,8 @@ const HomePage = () => {
   // Fetch latest blogs using API
   const { data: publishedBlogs = [], isLoading: isLoadingBlogs } = useQuery({
     queryKey: ['published-blogs'],
-    queryFn: fetchPublishedBlogs
+    queryFn: () => fetchPublishedBlogs(3) // Only fetch the 3 most recent blogs for the homepage
   });
-
-  const latestBlogs = publishedBlogs.slice(0, 3); // Take the first 3 published blogs
 
   return (
     <Layout>
@@ -108,9 +106,9 @@ const HomePage = () => {
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
-          ) : latestBlogs.length > 0 ? (
+          ) : publishedBlogs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {latestBlogs.map((blog) => (
+              {publishedBlogs.map((blog) => (
                 <BlogCard key={blog.id} blog={blog} />
               ))}
             </div>

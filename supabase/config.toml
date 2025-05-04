@@ -1,1 +1,10 @@
+
 project_id = "hqrqxedofrylfuylskvr"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[functions.api-blogs]
+verify_jwt = false

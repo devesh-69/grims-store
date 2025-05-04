@@ -4,23 +4,23 @@ import { Author, Blog } from "./blog";
 export interface BlogFormData {
   id?: string;
   title: string;
+  slug?: string;
   excerpt: string;
-  content: string;
+  body: string;
   coverImage: string;
+  category?: string[];
   date?: string;
   publishedAt?: string;
-  author: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  status?: string;
-  category?: string;
+  author: Author;
+  status?: 'draft' | 'published';
+  featured?: boolean;
+  commentsEnabled?: boolean;
+  keywords?: string[];
   seo?: {
     metaTitle?: string;
     metaDescription?: string;
     canonicalUrl?: string;
-    keywords?: string;
+    keywords?: string[];
   };
   socialPreview?: {
     ogTitle?: string;

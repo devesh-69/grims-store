@@ -8,19 +8,22 @@ export interface Author {
 export interface Blog {
   id: string;
   title: string;
+  slug: string;
   excerpt: string;
-  content: string;
+  body: string;
   coverImage: string;
+  category: string[];
   date: string;
   author: Author;
-  category?: string;
-  status?: string;
+  status?: 'draft' | 'published';
   publishedAt?: string;
+  featured?: boolean;
+  commentsEnabled?: boolean;
   seo?: {
     metaTitle?: string;
     metaDescription?: string;
     canonicalUrl?: string;
-    keywords?: string;
+    keywords?: string[];
   };
   socialPreview?: {
     ogTitle?: string;
