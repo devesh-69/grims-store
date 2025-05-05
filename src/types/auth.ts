@@ -1,25 +1,16 @@
 
-import { User as SupabaseUser } from '@supabase/supabase-js';
-
-// Extend the Supabase User type with additional properties
-export interface User extends SupabaseUser {
+export interface User {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    first_name?: string;
+    last_name?: string;
+  };
+  app_metadata?: {
+    provider?: string;
+    [key: string]: any;
+  };
+  avatar_url?: string;
   isAdmin?: boolean;
-}
-
-export interface AuthState {
-  user: User | null;
-  session: any | null;
-  loading: boolean;
-}
-
-export interface UserLogin {
-  email: string;
-  password: string;
-}
-
-export interface UserRegistration {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
+  [key: string]: any;
 }

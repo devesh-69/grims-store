@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -121,7 +120,9 @@ const AdminBlogPostsPage = () => {
     (blog) =>
       blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      blog.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      (Array.isArray(blog.category) && blog.category.some(cat => 
+        cat.toLowerCase().includes(searchTerm.toLowerCase())
+      ))
   );
 
   return (

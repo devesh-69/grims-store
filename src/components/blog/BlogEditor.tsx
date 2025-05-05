@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -41,7 +40,7 @@ const blogFormSchema = z.object({
   content: z.string().min(50, "Content must be at least 50 characters"),
   coverImage: z.string().url("Must be a valid URL"),
   date: z.date().optional(),
-  status: z.string().default("draft"),
+  status: z.enum(["draft", "published"]).default("draft"),
   category: z.string().optional(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().min(50, "Meta description should be at least 50 characters").max(160, "Meta description should be less than 160 characters").optional().or(z.literal("")),
@@ -90,15 +89,15 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
       ? {
           title: blog.title,
           excerpt: blog.excerpt,
-          content: blog.content,
+          content: blog.body || blog.content || "",
           coverImage: blog.coverImage,
           date: blog.date ? new Date(blog.date) : new Date(),
           status: blog.status || "draft",
-          category: blog.category || "",
+          category: Array.isArray(blog.category) ? blog.category.join(", ") : (blog.category || ""),
           metaTitle: blog.seo?.metaTitle || "",
           metaDescription: blog.seo?.metaDescription || "",
           canonicalUrl: blog.seo?.canonicalUrl || "",
-          keywords: blog.seo?.keywords || "",
+          keywords: blog.seo?.keywords ? blog.seo.keywords.join(", ") : "",
           ogTitle: blog.socialPreview?.ogTitle || "",
           ogDescription: blog.socialPreview?.ogDescription || "",
           twitterTitle: blog.socialPreview?.twitterTitle || "",
@@ -149,21 +148,21 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
         id: blog?.id,
         title: data.title,
         excerpt: data.excerpt,
-        content: data.content,
+        body: data.content,
         coverImage: data.coverImage,
         date: data.date ? format(data.date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         author: {
           id: user?.id || blog?.author.id || "anonymous",
-          name: user?.email?.split('@')[0] || blog?.author.name || "Anonymous",
-          avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (user?.id || blog?.author.id || "anonymous"),
+          name: user?.user_metadata?.first_name || blog?.author.name || "Anonymous",
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || blog?.author.id || "anonymous"}`,
         },
-        status: data.status,
-        category: data.category,
+        status: data.status as 'draft' | 'published',
+        category: data.category ? data.category.split(',').map(cat => cat.trim()) : [],
         seo: {
           metaTitle: data.metaTitle,
           metaDescription: data.metaDescription,
           canonicalUrl: data.canonicalUrl,
-          keywords: data.keywords,
+          keywords: data.keywords ? data.keywords.split(',').map(kw => kw.trim()) : [],
         },
         socialPreview: {
           ogTitle: data.ogTitle,

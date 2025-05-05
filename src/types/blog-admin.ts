@@ -8,11 +8,11 @@ export interface BlogFormData {
   excerpt: string;
   body: string;
   coverImage: string;
-  category?: string[];
+  category: string[];
   date?: string;
   publishedAt?: string;
   author: Author;
-  status?: 'draft' | 'published';
+  status: 'draft' | 'published';
   featured?: boolean;
   commentsEnabled?: boolean;
   keywords?: string[];
