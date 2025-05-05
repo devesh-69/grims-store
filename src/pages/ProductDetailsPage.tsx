@@ -217,6 +217,8 @@ const ProductDetailsPage = () => {
     );
   }
 
+  const isSubmitting = createRatingMutation.isPending || createReviewMutation.isPending;
+  
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6 md:py-12">
@@ -375,8 +377,8 @@ const ProductDetailsPage = () => {
                   rows={4}
                 />
               </div>
-              <Button onClick={handleReviewSubmit} disabled={createRatingMutation.isLoading || createReviewMutation.isLoading || ratingScore === null}> {/* Disable if loading or no rating selected */}
-                {createRatingMutation.isLoading || createReviewMutation.isLoading ? (
+              <Button onClick={handleReviewSubmit} disabled={isSubmitting}> {/* Disable if loading or no rating selected */}
+                {isSubmitting ? (
                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
                 Submit Review

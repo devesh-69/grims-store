@@ -6,8 +6,14 @@ enabled = true
 port = 54321
 schemas = ["public", "storage", "graphql_public"]
 
+# Blogs API function that doesn't require JWT verification
 [functions.api-blogs]
 verify_jwt = false
 
+# Admin Blogs API function that requires JWT verification
 [functions.api-admin-blogs]
+verify_jwt = true
+
+# Admin function for managing users (will check for admin role internally)
+[functions.api-admin-users]
 verify_jwt = true

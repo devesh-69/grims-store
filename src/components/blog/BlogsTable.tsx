@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Blog } from "@/types/blog";
 import { BlogsTableProps } from "@/types/blog-admin";
@@ -34,7 +35,9 @@ export function BlogsTable({ blogs, onEdit, onDelete, onView }: BlogsTableProps)
     (blog) =>
       blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      blog.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      (Array.isArray(blog.category) ? 
+        blog.category.some(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())) : 
+        false)
   );
 
   const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage);

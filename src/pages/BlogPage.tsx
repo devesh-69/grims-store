@@ -15,12 +15,12 @@ const BlogPage = () => {
   // Fetch blogs using React Query
   const { data: blogs = [], isLoading, error } = useQuery({
     queryKey: ['blogs'],
-    queryFn: fetchPublishedBlogs,
+    queryFn: async () => fetchPublishedBlogs(),
   });
 
   // Extract categories from blogs
   const categories = Array.from(
-    new Set(blogs.filter(blog => blog.category).map((blog) => blog.category))
+    new Set(blogs.flatMap(blog => blog.category || []))
   );
 
   // Filter blogs
@@ -47,9 +47,9 @@ const BlogPage = () => {
               >
                 All
               </button>
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <button
-                  key={category}
+                  key={index}
                   className="px-4 py-2 rounded-full bg-secondary/50 text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   {category}

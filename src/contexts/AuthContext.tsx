@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,13 +19,18 @@ interface AuthContextProps {
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 // List of admin emails - in a real-world scenario, this would be stored in and checked against the database
-const ADMIN_EMAILS = ['admin@example.com'];
+const ADMIN_EMAILS = ['admin@example.com', 'tatkaredevesh69@gmail.com'];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  
+  // Track if we've shown the sign in toast already
+  const initialSignInComplete = useRef(false);
+  // Track first mount of component
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -44,9 +49,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
         
-        if (event === 'SIGNED_IN') {
+        // Only show toasts for actual sign in/out events, not just session checks
+        if (event === 'SIGNED_IN' && !initialSignInComplete.current) {
+          // Only show the toast the first time
+          initialSignInComplete.current = true;
           toast.success('Signed in successfully');
         } else if (event === 'SIGNED_OUT') {
+          // Always show sign out toast
           toast.info('Signed out successfully');
         }
       }
@@ -63,12 +72,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isAdmin: ADMIN_EMAILS.includes(currentSession.user.email || '')
         };
         setUser(userWithRole);
+        // Initial sign in is complete if we have a session on first load
+        initialSignInComplete.current = true;
       } else {
         setUser(null);
       }
       
       setLoading(false);
     });
+
+    // After first mount, set initialMount to false
+    isInitialMount.current = false;
 
     return () => subscription.unsubscribe();
   }, []);
