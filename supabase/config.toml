@@ -17,3 +17,7 @@ verify_jwt = true
 # Admin function for managing users (will check for admin role internally)
 [functions.api-admin-users]
 verify_jwt = true
+
+# RPC function to get users with emails for admin
+[functions.get_users_with_emails]
+verify_jwt = true

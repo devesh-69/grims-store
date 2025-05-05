@@ -27,6 +27,7 @@ import ScheduledReportsPage from "./pages/ScheduledReportsPage";
 import WishlistPage from "./pages/WishlistPage";
 import ImportWishlistPage from "./pages/ImportWishlistPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
+import AdminSecurityPage from "./pages/AdminSecurityPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +116,11 @@ const App = () => (
             <Route path="/admin/settings" element={
               <ProtectedRoute>
                 <AdminSettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/security" element={
+              <ProtectedRoute>
+                <AdminSecurityPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

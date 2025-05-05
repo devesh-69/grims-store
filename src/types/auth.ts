@@ -12,5 +12,6 @@ export interface User {
   };
   avatar_url?: string;
   isAdmin?: boolean;
+  roles?: string[];
   [key: string]: any;
 }

@@ -14,6 +14,7 @@ interface AuthContextProps {
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
+  checkUserRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -32,19 +33,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Track first mount of component
   const isInitialMount = useRef(true);
 
+  const fetchUserRoles = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+        
+      return data?.map(r => r.role) || [];
+    } catch (error) {
+      console.error('Error fetching user roles:', error);
+      return [];
+    }
+  };
+
+  const setupUser = async (currentSession: Session | null) => {
+    if (currentSession?.user) {
+      // Check if the user is an admin based on their email
+      const isAdmin = ADMIN_EMAILS.includes(currentSession.user.email || '');
+      
+      // Fetch user roles from database
+      const roles = await fetchUserRoles(currentSession.user.id);
+      
+      const userWithRole: User = {
+        ...currentSession.user,
+        isAdmin,
+        roles
+      };
+      
+      setUser(userWithRole);
+      return userWithRole;
+    } else {
+      setUser(null);
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
         
+        // We use setTimeout to avoid a recursive loop with Supabase auth
         if (currentSession?.user) {
-          // Check if the user is an admin based on their email
-          const userWithRole: User = {
-            ...currentSession.user,
-            isAdmin: ADMIN_EMAILS.includes(currentSession.user.email || '')
-          };
-          setUser(userWithRole);
+          setTimeout(async () => {
+            await setupUser(currentSession);
+          }, 0);
         } else {
           setUser(null);
         }
@@ -62,23 +97,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       setSession(currentSession);
-      
-      if (currentSession?.user) {
-        // Check if the user is an admin based on their email
-        const userWithRole: User = {
-          ...currentSession.user,
-          isAdmin: ADMIN_EMAILS.includes(currentSession.user.email || '')
-        };
-        setUser(userWithRole);
-        // Initial sign in is complete if we have a session on first load
-        initialSignInComplete.current = true;
-      } else {
-        setUser(null);
-      }
-      
+      await setupUser(currentSession);
       setLoading(false);
+      
+      // Initial sign in is complete if we have a session on first load
+      if (currentSession?.user) {
+        initialSignInComplete.current = true;
+      }
     });
 
     // After first mount, set initialMount to false
@@ -86,6 +113,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkUserRole = (role: string): boolean => {
+    if (!user) return false;
+    if (user.isAdmin) return true; // Admins have all roles
+    return user.roles?.includes(role) || false;
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -142,7 +175,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, signIn, signUp, signOut, loading }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      signIn, 
+      signUp, 
+      signOut, 
+      loading, 
+      checkUserRole 
+    }}>
       {children}
     </AuthContext.Provider>
   );

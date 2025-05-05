@@ -12,6 +12,7 @@ import {
   Settings,
   LayoutDashboard,
   Calendar,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,11 @@ const AdminNav = () => {
       name: "Users",
       path: "/admin/users",
       icon: <Users className="h-5 w-5" />,
+    },
+    {
+      name: "Security",
+      path: "/admin/security",
+      icon: <Shield className="h-5 w-5" />,
     },
     {
       name: "Settings",
