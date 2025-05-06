@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useRoles, UserRole } from "@/hooks/useRoles";
+import { useRoles } from "@/hooks/useRoles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { Shield, Trash2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/types/auth";
 
 interface RoleManagerProps {
   userId: string;
@@ -17,7 +18,7 @@ interface RoleManagerProps {
 export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
   const { user } = useAuth();
   const { userRoles, isLoadingRoles, assignRole, removeRole, loading } = useRoles(userId);
-  const [selectedRole, setSelectedRole] = useState<UserRole>("viewer");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   
   const handleAssignRole = async () => {
     if (!selectedRole) {
@@ -51,13 +52,17 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
   const roleColors: Record<UserRole, string> = {
     admin: "bg-red-100 text-red-800 border-red-200",
     editor: "bg-blue-100 text-blue-800 border-blue-200",
-    viewer: "bg-green-100 text-green-800 border-green-200"
+    viewer: "bg-green-100 text-green-800 border-green-200",
+    moderator: "bg-purple-100 text-purple-800 border-purple-200",
+    user: "bg-gray-100 text-gray-800 border-gray-200"
   };
 
   const roleDescriptions: Record<UserRole, string> = {
     admin: "Full access to all system functions",
     editor: "Can create and edit content but not manage users or settings",
-    viewer: "Read-only access to content"
+    viewer: "Read-only access to content",
+    moderator: "Can moderate content and user interactions",
+    user: "Standard user privileges"
   };
 
   return (
@@ -118,7 +123,9 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="moderator">Moderator</SelectItem>
                     <SelectItem value="viewer">Viewer</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
                   </SelectContent>
                 </Select>
                 

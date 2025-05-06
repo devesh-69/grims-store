@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/auth';
-import { UserProfile, FilterCriteria, UserActionResult, UserFilters } from '@/types/user';
+import { UserProfile, FilterCriteria, UserActionResult, UserFilters, UserStatus } from '@/types/user';
 import { Feature, SystemSetting, SystemLog } from '@/types/auth';
 
 /**
@@ -25,7 +25,7 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
     company: profile.company || '',
     location: profile.location || '',
     signup_source: profile.signup_source || '',
-    status: profile.status || 'active',
+    status: (profile.status || 'active') as UserStatus,
     referral_code: profile.referral_code || '',
     spend: profile.spend || 0,
     last_login: profile.last_login || '',
@@ -276,7 +276,7 @@ export const createSystemLog = async (
         action: 'create',
         level,
         message,
-        context
+        context: context || {}
       }
     });
 

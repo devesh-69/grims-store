@@ -344,7 +344,7 @@ export const createBlog = async (blogData: BlogFormData): Promise<string> => {
       cover_image_url: blogData.coverImage,
       published_at: blogData.status === 'published' ? new Date().toISOString() : null,
       author_id: blogData.author.id,
-      status: blogData.status,
+      status: (blogData.status as 'draft' | 'published') || 'draft',
       category: blogData.category || [],
       featured: blogData.featured || false,
       comments_enabled: blogData.commentsEnabled || true,
@@ -440,9 +440,5 @@ export const updateBlogStatus = async (id: string, status: "published" | "draft"
   const { error } = await supabase.from("blogs").update({ status }).eq("id", id);
   if (error) throw error;
 };
-
-/**
- * Create Supabase Edge Functions for the API endpoints
- */
 
 // Now let's create the Edge Functions for RESTful API endpoints
