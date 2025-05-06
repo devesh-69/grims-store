@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,9 +57,13 @@ const AdminSecurityPage = () => {
         return [];
       }
 
-      // Get emails from auth.users
+      // Get emails from auth.users through RPC function
       const { data: authData, error: emailsError } = await supabase
-        .rpc('get_users_with_emails');
+        .functions.invoke('api-admin-users', {
+          body: {
+            action: 'get-users-with-emails'
+          }
+        });
 
       if (emailsError) {
         toast.error(`Failed to load user emails: ${emailsError.message}`);

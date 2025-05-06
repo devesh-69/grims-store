@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useTitle } from "@/hooks/useTitle";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -58,7 +57,7 @@ const AdminUsersPage = () => {
             created_at: new Date(Date.now() - index * 86400000).toISOString(),
             updated_at: new Date(Date.now() - index * 43200000).toISOString(),
             last_login: index % 3 === 0 ? new Date(Date.now() - index * 3600000).toISOString() : undefined,
-            roles: index % 10 === 0 ? ["admin"] : index % 5 === 0 ? ["moderator"] : ["user"],
+            roles: index % 10 === 0 ? ["admin"] : index % 5 === 0 ? ["user"] : ["user"],
             spend: index * 10.5,
             custom_attributes: index % 2 === 0 ? { preferences: { theme: "dark" } } : undefined,
           }));

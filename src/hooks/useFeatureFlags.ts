@@ -53,7 +53,7 @@ export const useFeatureFlags = () => {
     
     // Check if the user has one of the roles the flag applies to
     return userRoles.some(userRole => 
-      flag.applies_to_roles.includes(userRole.role)
+      flag.applies_to_roles.includes(userRole.role as UserRole)
     );
   };
 

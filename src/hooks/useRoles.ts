@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types/auth";
+import type { UserRole } from "@/types/auth";
 
 interface RoleAssignment {
   id: string;
@@ -71,7 +71,7 @@ export const useRoles = (userId?: string) => {
       
       const { data, error } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role: role })
+        .insert({ user_id: userId, role })
         .select()
         .single();
         
@@ -124,4 +124,5 @@ export const useRoles = (userId?: string) => {
   };
 };
 
-export { UserRole } from "@/types/auth";
+// Export type to fix the isolatedModules error
+export type { UserRole };

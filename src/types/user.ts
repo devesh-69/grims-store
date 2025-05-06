@@ -1,6 +1,7 @@
-
 import { Database } from "@/integrations/supabase/types";
 import { UserRole } from "@/types/auth";
+
+export type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending';
 
 export interface UserProfile {
   id: string;
@@ -8,17 +9,17 @@ export interface UserProfile {
   first_name?: string;
   last_name?: string;
   avatar_url?: string;
+  status?: UserStatus;
   company?: string;
   location?: string;
   signup_source?: string;
-  status?: string;
-  referral_code?: string;
-  spend?: number;
-  last_login?: string;
   created_at: string;
   updated_at: string;
+  last_login?: string;
+  roles?: import('@/types/auth').UserRole[];
+  spend?: number;
   custom_attributes?: Record<string, any>;
-  roles: UserRole[];
+  referral_code?: string;
 }
 
 export interface SavedSegment {

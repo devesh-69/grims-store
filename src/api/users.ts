@@ -48,7 +48,7 @@ export const fetchUsersWithEmails = async (): Promise<{ id: string; email: strin
     });
 
   if (error) throw error;
-  return data as { id: string; email: string; created_at: string }[];
+  return (data as any) || [];
 };
 
 /**

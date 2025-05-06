@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { UserRole } from "@/hooks/useRoles";
+import { UserRole } from "@/types/auth";
 
 const featureFlagSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -56,8 +56,8 @@ export function FeatureFlagsManager() {
     form.reset({
       name: flag.name,
       description: flag.description || "",
-      isEnabled: flag.isEnabled,
-      appliesToRoles: flag.appliesToRoles || [],
+      isEnabled: flag.is_enabled,
+      appliesToRoles: flag.applies_to_roles || [],
     });
     setIsDialogOpen(true);
   };
@@ -77,10 +77,18 @@ export function FeatureFlagsManager() {
       if (editingFlagId) {
         await updateFeatureFlag.mutateAsync({
           id: editingFlagId,
-          ...values,
+          name: values.name,
+          description: values.description,
+          isEnabled: values.isEnabled,
+          appliesToRoles: values.appliesToRoles as UserRole[],
         });
       } else {
-        await createFeatureFlag.mutateAsync(values);
+        await createFeatureFlag.mutateAsync({
+          name: values.name,
+          description: values.description,
+          isEnabled: values.isEnabled,
+          appliesToRoles: values.appliesToRoles as UserRole[],
+        });
       }
       setIsDialogOpen(false);
       resetForm();
@@ -101,8 +109,8 @@ export function FeatureFlagsManager() {
 
   const roleOptions: { value: UserRole; label: string }[] = [
     { value: "admin", label: "Admin" },
-    { value: "editor", label: "Editor" },
-    { value: "viewer", label: "Viewer" },
+    { value: "moderator", label: "Moderator" },
+    { value: "user", label: "User" },
   ];
 
   return (
@@ -288,14 +296,14 @@ export function FeatureFlagsManager() {
                     <TableCell className="font-medium">{flag.name}</TableCell>
                     <TableCell>{flag.description || "-"}</TableCell>
                     <TableCell>
-                      {flag.appliesToRoles && flag.appliesToRoles.length > 0 
-                        ? flag.appliesToRoles.join(", ") 
+                      {flag.applies_to_roles && flag.applies_to_roles.length > 0 
+                        ? flag.applies_to_roles.join(", ") 
                         : "All"}
                     </TableCell>
                     <TableCell>
                       <Switch
-                        checked={flag.isEnabled}
-                        onCheckedChange={() => handleToggleFlag(flag.id, flag.isEnabled)}
+                        checked={flag.is_enabled}
+                        onCheckedChange={() => handleToggleFlag(flag.id, flag.is_enabled)}
                         disabled={loading}
                       />
                     </TableCell>

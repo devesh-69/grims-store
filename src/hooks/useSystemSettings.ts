@@ -44,13 +44,12 @@ export const useSystemSettings = () => {
   };
 
   // Update a system setting
-  const updateSetting = useMutation({
-    mutationFn: async <T = any>({ key, value, isPublic, description }: { 
-      key: string, 
-      value: T, 
-      isPublic?: boolean, 
-      description?: string 
-    }) => {
+  const updateSetting = useMutation<
+    any, 
+    Error,
+    { key: string; value: any; isPublic?: boolean; description?: string }
+  >({
+    mutationFn: async ({ key, value, isPublic, description }) => {
       setLoading(true);
       
       const { data, error } = await supabase
