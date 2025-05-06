@@ -73,7 +73,7 @@ export const addUserRole = async (userId: string, role: UserRole): Promise<strin
     .from('user_roles')
     .insert({
       user_id: userId,
-      role: role as string
+      role: role.toString()
     })
     .select('id')
     .single();

@@ -36,14 +36,14 @@ export const useSystemSettings = () => {
 
   // Create or update a system setting
   const upsertSystemSetting = useMutation({
-    mutationFn: async <T>({ 
+    mutationFn: async ({ 
       key,
       value,
       isPublic,
       description
     }: { 
       key: string;
-      value: T;
+      value: any;
       isPublic?: boolean;
       description?: string;
     }) => {
