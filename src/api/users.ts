@@ -55,6 +55,19 @@ export const fetchUsersWithEmails = async (): Promise<{ id: string; email: strin
  * Add a role to a user
  */
 export const addUserRole = async (userId: string, role: UserRole): Promise<string> => {
+  // First check if the user already has this role
+  const { data: existingRoles, error: checkError } = await supabase
+    .from('user_roles')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('role', role);
+  
+  if (checkError) throw checkError;
+  
+  if (existingRoles && existingRoles.length > 0) {
+    throw new Error(`User already has the ${role} role`);
+  }
+  
   const { data, error } = await supabase
     .from('user_roles')
     .insert({
@@ -102,16 +115,17 @@ export const createFeatureFlag = async (
   isEnabled: boolean,
   appliesToRoles: UserRole[]
 ): Promise<string> => {
+  // Use Edge Functions to access the feature_flags table
   const { data, error } = await supabase
-    .from('feature_flags')
-    .insert({
-      name,
-      description,
-      is_enabled: isEnabled,
-      applies_to_roles: appliesToRoles
-    })
-    .select('id')
-    .single();
+    .functions.invoke('admin-feature-flags', {
+      body: {
+        action: 'create',
+        name,
+        description,
+        is_enabled: isEnabled,
+        applies_to_roles: appliesToRoles
+      }
+    });
 
   if (error) throw error;
   return data.id;
@@ -121,9 +135,13 @@ export const createFeatureFlag = async (
  * Get all feature flags
  */
 export const getFeatureFlags = async (): Promise<Feature[]> => {
+  // Use Edge Functions to access the feature_flags table
   const { data, error } = await supabase
-    .from('feature_flags')
-    .select('*');
+    .functions.invoke('admin-feature-flags', {
+      body: {
+        action: 'list'
+      }
+    });
 
   if (error) throw error;
   return data as Feature[];
@@ -141,10 +159,15 @@ export const updateFeatureFlag = async (
     applies_to_roles?: UserRole[];
   }
 ): Promise<void> => {
+  // Use Edge Functions to access the feature_flags table
   const { error } = await supabase
-    .from('feature_flags')
-    .update(updates)
-    .eq('id', id);
+    .functions.invoke('admin-feature-flags', {
+      body: {
+        action: 'update',
+        id,
+        ...updates
+      }
+    });
 
   if (error) throw error;
 };
@@ -153,10 +176,14 @@ export const updateFeatureFlag = async (
  * Delete a feature flag
  */
 export const deleteFeatureFlag = async (id: string): Promise<void> => {
+  // Use Edge Functions to access the feature_flags table
   const { error } = await supabase
-    .from('feature_flags')
-    .delete()
-    .eq('id', id);
+    .functions.invoke('admin-feature-flags', {
+      body: {
+        action: 'delete',
+        id
+      }
+    });
 
   if (error) throw error;
 };
@@ -165,11 +192,14 @@ export const deleteFeatureFlag = async (id: string): Promise<void> => {
  * Check if a feature flag is enabled
  */
 export const isFeatureEnabled = async (flagName: string): Promise<boolean> => {
+  // Use Edge Functions to access the feature_flags table
   const { data, error } = await supabase
-    .from('feature_flags')
-    .select('is_enabled')
-    .eq('name', flagName)
-    .single();
+    .functions.invoke('admin-feature-flags', {
+      body: {
+        action: 'check',
+        name: flagName
+      }
+    });
 
   if (error) return false;
   return data?.is_enabled || false;
@@ -184,47 +214,32 @@ export const upsertSystemSetting = async (
   isPublic: boolean = false,
   description?: string
 ): Promise<void> => {
-  // Check if setting exists
-  const { data: existingSetting } = await supabase
-    .from('system_settings')
-    .select('id')
-    .eq('key', key)
-    .maybeSingle();
-
-  if (existingSetting) {
-    // Update
-    const { error } = await supabase
-      .from('system_settings')
-      .update({
-        value,
-        is_public: isPublic,
-        description
-      })
-      .eq('id', existingSetting.id);
-
-    if (error) throw error;
-  } else {
-    // Insert
-    const { error } = await supabase
-      .from('system_settings')
-      .insert({
+  // Use Edge Functions to access the system_settings table
+  const { error } = await supabase
+    .functions.invoke('admin-system-settings', {
+      body: {
+        action: 'upsert',
         key,
         value,
         is_public: isPublic,
         description
-      });
+      }
+    });
 
-    if (error) throw error;
-  }
+  if (error) throw error;
 };
 
 /**
  * Get all system settings
  */
 export const getSystemSettings = async (): Promise<SystemSetting[]> => {
+  // Use Edge Functions to access the system_settings table
   const { data, error } = await supabase
-    .from('system_settings')
-    .select('*');
+    .functions.invoke('admin-system-settings', {
+      body: {
+        action: 'list'
+      }
+    });
 
   if (error) throw error;
   return data as SystemSetting[];
@@ -234,11 +249,14 @@ export const getSystemSettings = async (): Promise<SystemSetting[]> => {
  * Get a system setting by key
  */
 export const getSystemSetting = async <T = any>(key: string): Promise<T | null> => {
+  // Use Edge Functions to access the system_settings table
   const { data, error } = await supabase
-    .from('system_settings')
-    .select('value')
-    .eq('key', key)
-    .maybeSingle();
+    .functions.invoke('admin-system-settings', {
+      body: {
+        action: 'get',
+        key
+      }
+    });
 
   if (error || !data) return null;
   return data.value as T;
@@ -253,11 +271,13 @@ export const createSystemLog = async (
   context?: Record<string, any>
 ): Promise<void> => {
   const { error } = await supabase
-    .from('system_logs')
-    .insert({
-      level,
-      message,
-      context
+    .functions.invoke('admin-system-logs', {
+      body: {
+        action: 'create',
+        level,
+        message,
+        context
+      }
     });
 
   if (error) {

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Blog } from '@/types/blog';
 import { BlogFormData } from '@/types/blog-admin';
@@ -431,6 +430,14 @@ export const publishBlog = async (id: string): Promise<void> => {
     })
     .eq('id', id);
 
+  if (error) throw error;
+};
+
+/**
+ * Admin API: Update the status of a blog post
+ */
+export const updateBlogStatus = async (id: string, status: "published" | "draft"): Promise<void> => {
+  const { error } = await supabase.from("blogs").update({ status }).eq("id", id);
   if (error) throw error;
 };
 

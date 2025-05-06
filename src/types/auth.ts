@@ -1,4 +1,6 @@
 
+export type UserRole = 'admin' | 'editor' | 'viewer';
+
 export interface User {
   id: string;
   email?: string;
@@ -15,8 +17,6 @@ export interface User {
   roles?: string[];
   [key: string]: any;
 }
-
-export type UserRole = 'admin' | 'editor' | 'viewer';
 
 export interface Feature {
   id: string;

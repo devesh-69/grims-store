@@ -55,16 +55,27 @@ export const useRoles = (userId?: string) => {
   const assignRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string, role: UserRole }) => {
       setLoading(true);
+      
+      // First check if the user already has this role
+      const { data: existingRoles, error: checkError } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('role', role);
+        
+      if (checkError) throw checkError;
+      
+      if (existingRoles && existingRoles.length > 0) {
+        throw new Error(`User already has the ${role} role`);
+      }
+      
       const { data, error } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role })
+        .insert({ user_id: userId, role: role })
         .select()
         .single();
         
       if (error) {
-        if (error.code === '23505') { // Unique violation
-          throw new Error(`User already has the ${role} role`);
-        }
         throw error;
       }
       

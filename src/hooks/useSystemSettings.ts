@@ -15,25 +15,24 @@ export const useSystemSettings = () => {
   const { data: systemSettings = [], isLoading: isLoadingSettings } = useQuery({
     queryKey: ['system-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('*')
-        .order('key');
+      try {
+        const { data, error } = await supabase
+          .functions.invoke('admin-system-settings', {
+            body: {
+              action: 'list'
+            }
+          });
+          
+        if (error) {
+          toast.error(`Failed to fetch system settings: ${error.message}`);
+          return [];
+        }
         
-      if (error) {
+        return data as SystemSetting[];
+      } catch (error: any) {
         toast.error(`Failed to fetch system settings: ${error.message}`);
         return [];
       }
-      
-      return data.map((setting): SystemSetting => ({
-        id: setting.id,
-        key: setting.key,
-        value: setting.value,
-        is_public: setting.is_public,
-        description: setting.description,
-        updated_at: setting.updated_at,
-        updated_by: setting.updated_by
-      }));
     },
     enabled: !!user,
   });
@@ -54,49 +53,19 @@ export const useSystemSettings = () => {
     }) => {
       setLoading(true);
       
-      // Check if setting exists
-      const { data: existingSetting } = await supabase
-        .from('system_settings')
-        .select('id')
-        .eq('key', key)
-        .maybeSingle();
-      
-      let result;
-      
-      if (existingSetting) {
-        // Update existing setting
-        const updateData: any = { value, updated_by: user?.id };
-        if (isPublic !== undefined) updateData.is_public = isPublic;
-        if (description !== undefined) updateData.description = description;
-        
-        const { data, error } = await supabase
-          .from('system_settings')
-          .update(updateData)
-          .eq('id', existingSetting.id)
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = data;
-      } else {
-        // Create new setting
-        const { data, error } = await supabase
-          .from('system_settings')
-          .insert({
+      const { data, error } = await supabase
+        .functions.invoke('admin-system-settings', {
+          body: {
+            action: 'upsert',
             key,
             value,
-            is_public: isPublic ?? false,
-            description,
-            updated_by: user?.id
-          })
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = data;
-      }
-      
-      return result;
+            is_public: isPublic,
+            description
+          }
+        });
+        
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-settings'] });

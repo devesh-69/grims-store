@@ -1,23 +1,13 @@
 
+# This is your Supabase config file
+
 project_id = "hqrqxedofrylfuylskvr"
 
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage", "graphql_public"]
-
-# Blogs API function that doesn't require JWT verification
-[functions.api-blogs]
-verify_jwt = false
-
-# Admin Blogs API function that requires JWT verification
-[functions.api-admin-blogs]
+[functions.admin-feature-flags]
 verify_jwt = true
 
-# Admin function for managing users (will check for admin role internally)
-[functions.api-admin-users]
+[functions.admin-system-settings]
 verify_jwt = true
 
-# RPC function to get users with emails for admin
-[functions.get_users_with_emails]
+[functions.admin-system-logs]
 verify_jwt = true

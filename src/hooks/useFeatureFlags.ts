@@ -17,17 +17,24 @@ export const useFeatureFlags = () => {
   const { data: featureFlags = [], isLoading: isLoadingFlags } = useQuery({
     queryKey: ['feature-flags'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('feature_flags')
-        .select('*')
-        .order('name');
+      try {
+        const { data, error } = await supabase
+          .functions.invoke('admin-feature-flags', {
+            body: {
+              action: 'list'
+            }
+          });
+            
+        if (error) {
+          toast.error(`Failed to fetch feature flags: ${error.message}`);
+          return [];
+        }
         
-      if (error) {
+        return data as Feature[];
+      } catch (error: any) {
         toast.error(`Failed to fetch feature flags: ${error.message}`);
         return [];
       }
-      
-      return data as Feature[];
     },
     enabled: !!user,
   });
@@ -66,15 +73,15 @@ export const useFeatureFlags = () => {
       setLoading(true);
       
       const { data, error } = await supabase
-        .from('feature_flags')
-        .insert({
-          name,
-          description,
-          is_enabled: isEnabled,
-          applies_to_roles: appliesToRoles
-        })
-        .select()
-        .single();
+        .functions.invoke('admin-feature-flags', {
+          body: {
+            action: 'create',
+            name,
+            description,
+            is_enabled: isEnabled,
+            applies_to_roles: appliesToRoles
+          }
+        });
         
       if (error) throw error;
       return data;
@@ -107,18 +114,17 @@ export const useFeatureFlags = () => {
     }) => {
       setLoading(true);
       
-      const updates: any = {};
-      if (name !== undefined) updates.name = name;
-      if (description !== undefined) updates.description = description;
-      if (isEnabled !== undefined) updates.is_enabled = isEnabled;
-      if (appliesToRoles !== undefined) updates.applies_to_roles = appliesToRoles;
-      
       const { data, error } = await supabase
-        .from('feature_flags')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+        .functions.invoke('admin-feature-flags', {
+          body: {
+            action: 'update',
+            id,
+            name,
+            description,
+            is_enabled: isEnabled,
+            applies_to_roles: appliesToRoles
+          }
+        });
         
       if (error) throw error;
       return data;
@@ -139,9 +145,12 @@ export const useFeatureFlags = () => {
     mutationFn: async (id: string) => {
       setLoading(true);
       const { error } = await supabase
-        .from('feature_flags')
-        .delete()
-        .eq('id', id);
+        .functions.invoke('admin-feature-flags', {
+          body: {
+            action: 'delete',
+            id
+          }
+        });
         
       if (error) throw error;
     },
