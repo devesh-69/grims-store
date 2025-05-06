@@ -345,7 +345,7 @@ export const createBlog = async (blogData: BlogFormData): Promise<string> => {
       cover_image_url: blogData.coverImage,
       published_at: blogData.status === 'published' ? new Date().toISOString() : null,
       author_id: blogData.author.id,
-      status: blogData.status as 'draft' | 'published',
+      status: blogData.status,
       category: blogData.category || [],
       featured: blogData.featured || false,
       comments_enabled: blogData.commentsEnabled || true,

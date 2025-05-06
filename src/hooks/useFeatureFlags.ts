@@ -3,21 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Feature, UserRole } from "@/types/auth";
+import { useRoles } from "./useRoles";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "./useRoles";
-
-interface FeatureFlag {
-  id: string;
-  name: string;
-  description?: string;
-  isEnabled: boolean;
-  appliesToRoles: UserRole[];
-  createdAt: string;
-  updatedAt: string;
-}
 
 export const useFeatureFlags = () => {
   const { user } = useAuth();
+  const { userRoles } = useRoles();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
@@ -35,37 +27,51 @@ export const useFeatureFlags = () => {
         return [];
       }
       
-      return data.map(flag => ({
-        id: flag.id,
-        name: flag.name,
-        description: flag.description,
-        isEnabled: flag.is_enabled,
-        appliesToRoles: flag.applies_to_roles || [],
-        createdAt: flag.created_at,
-        updatedAt: flag.updated_at
-      }));
+      return data as Feature[];
     },
     enabled: !!user,
   });
 
-  // Check if a feature flag is enabled
+  // Check if a feature flag is enabled for the current user
   const isFeatureEnabled = (flagName: string): boolean => {
     const flag = featureFlags.find(f => f.name === flagName);
-    return !!flag?.isEnabled;
+    
+    if (!flag) return false;
+    if (!flag.is_enabled) return false;
+    
+    // If no roles are specified, the flag applies to everyone
+    if (!flag.applies_to_roles || flag.applies_to_roles.length === 0) {
+      return true;
+    }
+    
+    // Check if the user has one of the roles the flag applies to
+    return userRoles.some(userRole => 
+      flag.applies_to_roles.includes(userRole.role)
+    );
   };
 
   // Create a new feature flag
   const createFeatureFlag = useMutation({
-    mutationFn: async (flag: Omit<FeatureFlag, 'id' | 'createdAt' | 'updatedAt'>) => {
+    mutationFn: async ({ 
+      name,
+      description,
+      isEnabled,
+      appliesToRoles
+    }: { 
+      name: string;
+      description?: string;
+      isEnabled: boolean;
+      appliesToRoles: UserRole[];
+    }) => {
       setLoading(true);
+      
       const { data, error } = await supabase
         .from('feature_flags')
         .insert({
-          name: flag.name,
-          description: flag.description,
-          is_enabled: flag.isEnabled,
-          applies_to_roles: flag.appliesToRoles,
-          created_by: user?.id
+          name,
+          description,
+          is_enabled: isEnabled,
+          applies_to_roles: appliesToRoles
         })
         .select()
         .single();
@@ -86,18 +92,30 @@ export const useFeatureFlags = () => {
 
   // Update a feature flag
   const updateFeatureFlag = useMutation({
-    mutationFn: async ({ id, ...flag }: Partial<FeatureFlag> & { id: string }) => {
+    mutationFn: async ({ 
+      id,
+      name,
+      description,
+      isEnabled,
+      appliesToRoles
+    }: { 
+      id: string;
+      name?: string;
+      description?: string;
+      isEnabled?: boolean;
+      appliesToRoles?: UserRole[];
+    }) => {
       setLoading(true);
-      const updateData: any = {};
       
-      if (flag.name !== undefined) updateData.name = flag.name;
-      if (flag.description !== undefined) updateData.description = flag.description;
-      if (flag.isEnabled !== undefined) updateData.is_enabled = flag.isEnabled;
-      if (flag.appliesToRoles !== undefined) updateData.applies_to_roles = flag.appliesToRoles;
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (description !== undefined) updates.description = description;
+      if (isEnabled !== undefined) updates.is_enabled = isEnabled;
+      if (appliesToRoles !== undefined) updates.applies_to_roles = appliesToRoles;
       
       const { data, error } = await supabase
         .from('feature_flags')
-        .update(updateData)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();

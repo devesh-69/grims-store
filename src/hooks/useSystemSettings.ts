@@ -4,15 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-
-interface SystemSetting<T = any> {
-  id: string;
-  key: string;
-  value: T;
-  isPublic: boolean;
-  description?: string;
-  updatedAt: string;
-}
+import { SystemSetting } from "@/types/auth";
 
 export const useSystemSettings = () => {
   const { user } = useAuth();
@@ -33,13 +25,14 @@ export const useSystemSettings = () => {
         return [];
       }
       
-      return data.map(setting => ({
+      return data.map((setting): SystemSetting => ({
         id: setting.id,
         key: setting.key,
         value: setting.value,
-        isPublic: setting.is_public,
+        is_public: setting.is_public,
         description: setting.description,
-        updatedAt: setting.updated_at
+        updated_at: setting.updated_at,
+        updated_by: setting.updated_by
       }));
     },
     enabled: !!user,
@@ -92,7 +85,7 @@ export const useSystemSettings = () => {
           .insert({
             key,
             value,
-            is_public: isPublic || false,
+            is_public: isPublic ?? false,
             description,
             updated_by: user?.id
           })

@@ -1,7 +1,6 @@
 
 import { Database } from "@/integrations/supabase/types";
-
-export type UserRole = "admin" | "moderator" | "user";
+import { UserRole } from "@/types/auth";
 
 export interface UserProfile {
   id: string;

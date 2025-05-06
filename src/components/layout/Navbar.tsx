@@ -142,8 +142,8 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 flex items-center justify-center space-x-2 px-0">
                    <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar_url || undefined} alt="User Avatar" /> {/* Use user.avatar_url */}
-                    <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : <User className="h-5 w-5" />}</AvatarFallback> {/* Use first letter of email as fallback */}
+                    <AvatarImage src={user.avatar_url} alt="User Avatar" /> 
+                    <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : <User className="h-5 w-5" />}</AvatarFallback>
                   </Avatar>
                   {/* Display user's first name or email */}
                   <span className="text-sm font-medium hidden sm:block">{user.user_metadata?.first_name || user.email}</span>

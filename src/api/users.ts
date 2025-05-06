@@ -1,7 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { UserRole } from '@/hooks/useRoles';
+import { UserRole } from '@/types/auth';
 import { UserProfile, FilterCriteria, UserActionResult, UserFilters } from '@/types/user';
+import { Feature, SystemSetting, SystemLog } from '@/types/auth';
 
 /**
  * Fetch all users with their profiles
@@ -17,7 +18,7 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
   // Map to UserProfile interface
   return data.map((profile): UserProfile => ({
     id: profile.id,
-    email: profile.email || '',
+    email: '', // Will be populated from auth.users if needed
     first_name: profile.first_name || '',
     last_name: profile.last_name || '',
     avatar_url: profile.avatar_url || '',
@@ -40,10 +41,14 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
  */
 export const fetchUsersWithEmails = async (): Promise<{ id: string; email: string; created_at: string }[]> => {
   const { data, error } = await supabase
-    .rpc('get_users_with_emails');
+    .functions.invoke('api-admin-users', {
+      body: {
+        action: 'get-users-with-emails'
+      }
+    });
 
   if (error) throw error;
-  return data;
+  return data as { id: string; email: string; created_at: string }[];
 };
 
 /**
@@ -85,7 +90,7 @@ export const getUserRoles = async (userId: string): Promise<UserRole[]> => {
     .eq('user_id', userId);
 
   if (error) throw error;
-  return data.map(r => r.role) as UserRole[];
+  return data.map(r => r.role as UserRole);
 };
 
 /**
@@ -110,6 +115,18 @@ export const createFeatureFlag = async (
 
   if (error) throw error;
   return data.id;
+};
+
+/**
+ * Get all feature flags
+ */
+export const getFeatureFlags = async (): Promise<Feature[]> => {
+  const { data, error } = await supabase
+    .from('feature_flags')
+    .select('*');
+
+  if (error) throw error;
+  return data as Feature[];
 };
 
 /**
@@ -199,6 +216,18 @@ export const upsertSystemSetting = async (
 
     if (error) throw error;
   }
+};
+
+/**
+ * Get all system settings
+ */
+export const getSystemSettings = async (): Promise<SystemSetting[]> => {
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('*');
+
+  if (error) throw error;
+  return data as SystemSetting[];
 };
 
 /**

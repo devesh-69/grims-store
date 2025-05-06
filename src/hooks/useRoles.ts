@@ -4,8 +4,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-
-export type UserRole = "admin" | "editor" | "viewer";
+import { UserRole } from "@/types/auth";
 
 interface RoleAssignment {
   id: string;
@@ -40,7 +39,7 @@ export const useRoles = (userId?: string) => {
       return data.map(role => ({
         id: role.id,
         userId: role.user_id,
-        role: role.role,
+        role: role.role as UserRole,
         createdAt: role.created_at
       }));
     },
@@ -113,3 +112,5 @@ export const useRoles = (userId?: string) => {
     loading
   };
 };
+
+export { UserRole } from "@/types/auth";
