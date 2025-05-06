@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +57,7 @@ const AdminSecurityPage = () => {
         return [];
       }
 
-      // Get emails from auth.users through RPC function
+      // Get emails from auth.users through Edge Function
       const { data: authData, error: emailsError } = await supabase
         .functions.invoke('api-admin-users', {
           body: {

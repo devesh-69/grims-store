@@ -111,6 +111,8 @@ export function FeatureFlagsManager() {
     { value: "admin", label: "Admin" },
     { value: "moderator", label: "Moderator" },
     { value: "user", label: "User" },
+    { value: "editor", label: "Editor" },
+    { value: "viewer", label: "Viewer" },
   ];
 
   return (

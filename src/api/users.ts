@@ -68,11 +68,12 @@ export const addUserRole = async (userId: string, role: UserRole): Promise<strin
     throw new Error(`User already has the ${role} role`);
   }
   
+  // Convert UserRole to string to match the database schema
   const { data, error } = await supabase
     .from('user_roles')
     .insert({
       user_id: userId,
-      role
+      role: role as string
     })
     .select('id')
     .single();

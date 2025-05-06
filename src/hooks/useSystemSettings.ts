@@ -3,11 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
 import { SystemSetting } from "@/types/auth";
 
 export const useSystemSettings = () => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +20,7 @@ export const useSystemSettings = () => {
               action: 'list'
             }
           });
-          
+            
         if (error) {
           toast.error(`Failed to fetch system settings: ${error.message}`);
           return [];
@@ -34,22 +32,21 @@ export const useSystemSettings = () => {
         return [];
       }
     },
-    enabled: !!user,
   });
 
-  // Get a specific setting by key
-  const getSetting = <T = any>(key: string): T | undefined => {
-    const setting = systemSettings.find(s => s.key === key);
-    return setting?.value;
-  };
-
-  // Update a system setting
-  const updateSetting = useMutation<
-    any, 
-    Error,
-    { key: string; value: any; isPublic?: boolean; description?: string }
-  >({
-    mutationFn: async ({ key, value, isPublic, description }) => {
+  // Create or update a system setting
+  const upsertSystemSetting = useMutation({
+    mutationFn: async <T>({ 
+      key,
+      value,
+      isPublic,
+      description
+    }: { 
+      key: string;
+      value: T;
+      isPublic?: boolean;
+      description?: string;
+    }) => {
       setLoading(true);
       
       const { data, error } = await supabase
@@ -58,8 +55,8 @@ export const useSystemSettings = () => {
             action: 'upsert',
             key,
             value,
-            is_public: isPublic,
-            description
+            is_public: isPublic || false,
+            description: description || ''
           }
         });
         
@@ -77,18 +74,36 @@ export const useSystemSettings = () => {
     }
   });
 
-  // Check if system is in maintenance mode
-  const isMaintenanceMode = (): boolean => {
-    const maintenanceSetting = getSetting<{ enabled: boolean }>('maintenance_mode');
-    return !!maintenanceSetting?.enabled;
-  };
+  // Delete a system setting
+  const deleteSystemSetting = useMutation({
+    mutationFn: async (key: string) => {
+      setLoading(true);
+      const { error } = await supabase
+        .functions.invoke('admin-system-settings', {
+          body: {
+            action: 'delete',
+            key
+          }
+        });
+        
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-settings'] });
+      toast.success('Setting deleted successfully');
+      setLoading(false);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete setting: ${error.message}`);
+      setLoading(false);
+    }
+  });
 
   return {
     systemSettings,
     isLoadingSettings,
-    getSetting,
-    updateSetting,
-    isMaintenanceMode,
+    upsertSystemSetting,
+    deleteSystemSetting,
     loading
   };
 };

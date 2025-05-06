@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,9 +69,13 @@ export const useRoles = (userId?: string) => {
         throw new Error(`User already has the ${role} role`);
       }
       
+      // Convert UserRole to string to match the database schema
       const { data, error } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role })
+        .insert({ 
+          user_id: userId, 
+          role: role as string 
+        })
         .select()
         .single();
         
