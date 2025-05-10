@@ -74,7 +74,7 @@ export const useRoles = (userId?: string) => {
         .from('user_roles')
         .insert({ 
           user_id: userId, 
-          role: role 
+          role 
         })
         .select()
         .single();

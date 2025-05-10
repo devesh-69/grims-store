@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import * as React from 'react';
+import { createContext, useContext, useEffect, useState } from "react";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 type Theme = "dark" | "light";

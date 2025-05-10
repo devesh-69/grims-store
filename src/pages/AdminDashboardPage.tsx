@@ -1,5 +1,4 @@
-
-import React from "react";
+import * as React from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
 const AdminDashboardPage = () => {

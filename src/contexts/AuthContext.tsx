@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { User } from '@/types/auth';
+import { User, UserRole } from '@/types/auth';
 
 interface AuthContextProps {
   session: Session | null;
@@ -58,7 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userWithRole: User = {
         ...currentSession.user,
         isAdmin,
-        roles
+        roles,
+        user_metadata: currentSession.user.user_metadata,
+        avatar_url: currentSession.user.user_metadata?.avatar_url as string,
       };
       
       setUser(userWithRole);
@@ -117,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkUserRole = (role: string): boolean => {
     if (!user) return false;
     if (user.isAdmin) return true; // Admins have all roles
-    return user.roles?.includes(role) || false;
+    return user.roles?.includes(role as UserRole) || false;
   };
 
   const signIn = async (email: string, password: string) => {

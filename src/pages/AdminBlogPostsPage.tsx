@@ -14,20 +14,20 @@ import { Input } from "@/components/ui/input";
 import { fetchAllBlogs, createBlog, updateBlog, deleteBlog } from "@/api/blogs";
 import { useAuth } from "@/contexts/AuthContext";
 
-const AdminBlogPostsPage = () => {
+export const AdminBlogPostsPage = () => {
   useTitle("Blog Posts Management | Admin");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentBlog, setCurrentBlog] = useState<Blog | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { user } = useAuth();
+  const { user, checkUserRole } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch blogs from API
   const { data: blogs = [], isLoading, error } = useQuery({
     queryKey: ['admin-blogs'],
     queryFn: fetchAllBlogs,
-    enabled: !!user?.isAdmin, // Only fetch if user is admin
+    enabled: !!checkUserRole('admin') || !!checkUserRole('editor'), // Only fetch if user is admin or editor
   });
 
   // Create blog mutation
@@ -124,6 +124,13 @@ const AdminBlogPostsPage = () => {
         cat.toLowerCase().includes(searchTerm.toLowerCase())
       ))
   );
+
+  useEffect(() => {
+    if (!checkUserRole('admin') && !checkUserRole('editor')) {
+      navigate('/');
+      toast.error("You don't have permission to access this page");
+    }
+  }, [navigate, checkUserRole]);
 
   return (
     <AdminLayout>
