@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,8 +16,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Save, Trash, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
-import { useSystemSettings } from "@/hooks/useSystemSettings";
-import { useTheme } from "@/contexts/ThemeContext";
 
 // Define the settings schema
 const settingsSchema = z.object({
@@ -38,13 +36,12 @@ type SettingsValues = z.infer<typeof settingsSchema>;
 
 const AdminSettingsPage = () => {
   const { toast } = useToast();
-  const { systemSettings, updateSettings, isLoadingSettings, loading } = useSystemSettings();
-  const { theme, setTheme } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
   
   const defaultSettings: SettingsValues = {
     siteName: "Grim's Store",
     emailNotifications: true,
-    darkMode: theme === "dark",
+    darkMode: true,
     language: "en",
     itemsPerPage: 20,
     autoSave: true,
@@ -60,45 +57,43 @@ const AdminSettingsPage = () => {
     defaultValues: defaultSettings,
   });
 
-  // Load settings from Supabase
+  // Load settings from localStorage on mount
   useEffect(() => {
-    if (!isLoadingSettings && systemSettings?.length > 0) {
-      const settings = systemSettings.reduce((acc, setting) => {
-        acc[setting.key] = setting.value;
-        return acc;
-      }, {} as Record<string, any>);
-
-      // Update form with values from Supabase
-      Object.entries(settings).forEach(([key, value]) => {
-        if (key in defaultSettings) {
-          form.setValue(key as any, value);
-        }
-      });
-
-      toast({
-        title: "Settings loaded",
-        description: "Your settings have been loaded from the database.",
-      });
+    const savedSettings = localStorage.getItem("adminSettings");
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        Object.keys(parsed).forEach(key => {
+          form.setValue(key as any, parsed[key]);
+        });
+        toast({
+          title: "Settings loaded",
+          description: "Your saved settings have been loaded.",
+        });
+      } catch (error) {
+        console.error("Error parsing saved settings:", error);
+      }
     }
-  }, [systemSettings, isLoadingSettings, form, toast]);
+  }, [form, toast]);
 
-  const onSubmit = async (values: SettingsValues) => {
-    // Update dark mode
-    if (values.darkMode !== (theme === "dark")) {
-      setTheme(values.darkMode ? "dark" : "light");
-    }
+  const onSubmit = (values: SettingsValues) => {
+    setIsLoading(true);
     
-    // Save all settings to Supabase
-    const success = await updateSettings(values);
-    
-    if (success) {
+    // Simulate API call
+    setTimeout(() => {
+      // Save settings to localStorage
+      localStorage.setItem("adminSettings", JSON.stringify(values));
+      
+      setIsLoading(false);
+      
+      // Show success toast
       toast({
         title: "Settings saved",
         description: "Your settings have been saved successfully.",
       });
       
       console.log("Settings saved:", values);
-    }
+    }, 800);
   };
 
   const resetSettings = () => {
@@ -133,7 +128,6 @@ const AdminSettingsPage = () => {
               variant="outline" 
               onClick={resetSettings}
               className="flex items-center border-primary/30 text-foreground hover:bg-primary/10 hover:text-primary"
-              disabled={loading || isLoadingSettings}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Reset
@@ -187,7 +181,6 @@ const AdminSettingsPage = () => {
                           <Select 
                             onValueChange={field.onChange} 
                             defaultValue={field.value}
-                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger className="bg-background/50 border-border text-foreground focus-visible:ring-primary">
@@ -218,7 +211,7 @@ const AdminSettingsPage = () => {
                           <FormControl>
                             <div className="flex flex-col space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="w-12 text-sm text-muted-foreground">5</span>
+                                <span className="w-12 text-sm text-muted-foreground">{field.value}</span>
                                 <span className="w-12 text-right text-sm text-muted-foreground">100</span>
                               </div>
                               <Slider
@@ -229,9 +222,6 @@ const AdminSettingsPage = () => {
                                 onValueChange={(values) => field.onChange(values[0])}
                                 className="[&>span]:bg-primary"
                               />
-                              <div className="text-sm text-center mt-1 text-muted-foreground">
-                                {field.value} items
-                              </div>
                             </div>
                           </FormControl>
                           <FormDescription className="text-muted-foreground">
@@ -279,9 +269,7 @@ const AdminSettingsPage = () => {
                             <FormControl>
                               <Switch
                                 checked={field.value}
-                                onCheckedChange={(checked) => {
-                                  field.onChange(checked);
-                                }}
+                                onCheckedChange={field.onChange}
                                 className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                             </FormControl>
@@ -465,10 +453,10 @@ const AdminSettingsPage = () => {
             <div className="flex justify-end">
               <Button 
                 type="submit" 
-                disabled={loading || isLoadingSettings}
+                disabled={isLoading}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {loading ? (
+                {isLoading ? (
                   <>
                     <motion.div 
                       animate={{ rotate: 360 }}

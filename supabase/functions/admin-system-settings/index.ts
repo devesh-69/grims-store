@@ -154,16 +154,6 @@ serve(async (req) => {
         
         result = getData;
         break;
-
-      case 'delete':
-        const { error: deleteError } = await supabaseClient
-          .from('system_settings')
-          .delete()
-          .eq('key', key);
-          
-        if (deleteError) throw deleteError;
-        result = { success: true, message: `Setting ${key} deleted successfully` };
-        break;
         
       default:
         return new Response(JSON.stringify({ error: 'Invalid action' }), {

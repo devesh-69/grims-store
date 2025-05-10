@@ -1,73 +1,134 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useSystemSettings } from "@/hooks/useSystemSettings";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { Toaster } from "sonner";
 
-// Import pages
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import AboutPage from "./pages/AboutPage";
-import ContactPage from "./pages/ContactPage";
+import ProductsPage from "./pages/ProductsPage";
+import ProductDetailsPage from "./pages/ProductDetailsPage";
+import BlogPage from "./pages/BlogPage";
+import BlogDetailsPage from "./pages/BlogDetailsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import NotFound from "./pages/NotFound";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminProductsPage from "./pages/AdminProductsPage";
+import AdminAddProductPage from "./pages/AdminAddProductPage";
+import AdminEditProductPage from "./pages/AdminEditProductPage";
+import AdminBlogPostsPage from "./pages/AdminBlogPostsPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
-import AdminFeaturesPage from "./pages/AdminFeaturesPage";
+import AdminReportsPage from "./pages/AdminReportsPage";
+import ReportDetailsPage from "./pages/ReportDetailsPage";
+import CreateReportPage from "./pages/CreateReportPage";
+import ScheduledReportsPage from "./pages/ScheduledReportsPage";
+import WishlistPage from "./pages/WishlistPage";
+import ImportWishlistPage from "./pages/ImportWishlistPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
-import AdminLogsPage from "./pages/AdminLogsPage";
-import AdminEmailTemplatesPage from "./pages/AdminEmailTemplatesPage";
-import AdminApiKeysPage from "./pages/AdminApiKeysPage";
-import MaintenancePage from "./pages/MaintenancePage";
+import AdminSecurityPage from "./pages/AdminSecurityPage";
 
-// Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
-const MaintenanceWrapper = ({ children }: { children: React.ReactNode }) => {
-  const { getSetting } = useSystemSettings();
-  const maintenanceMode = getSetting<boolean>("maintenanceMode", false);
-  
-  // Allow access to admin pages even in maintenance mode
-  const path = window.location.pathname;
-  const isAdminPath = path.startsWith("/admin");
-  
-  if (maintenanceMode && !isAdminPath) {
-    return <MaintenancePage />;
-  }
-  
-  return <>{children}</>;
-};
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Router>
-          <MaintenanceWrapper>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminDashboardPage />} />
-              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-              <Route path="/admin/users" element={<AdminUsersPage />} />
-              <Route path="/admin/features" element={<AdminFeaturesPage />} />
-              <Route path="/admin/settings" element={<AdminSettingsPage />} />
-              <Route path="/admin/logs" element={<AdminLogsPage />} />
-              <Route path="/admin/email-templates" element={<AdminEmailTemplatesPage />} />
-              <Route path="/admin/api-keys" element={<AdminApiKeysPage />} />
-            </Routes>
-          </MaintenanceWrapper>
-          <Toaster position="top-right" />
-        </Router>
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/products/:id" element={<ProductDetailsPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogDetailsPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/wishlist" element={
+              <ProtectedRoute>
+                <WishlistPage />
+              </ProtectedRoute>
+            } />
+             <Route path="/wishlist/import/:shareId" element={
+              <ProtectedRoute>
+                <ImportWishlistPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/products" element={
+              <ProtectedRoute>
+                <AdminProductsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/products/add" element={
+              <ProtectedRoute>
+                <AdminAddProductPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/products/edit/:id" element={
+              <ProtectedRoute>
+                <AdminEditProductPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/blog-posts" element={
+              <ProtectedRoute>
+                <AdminBlogPostsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute>
+                <AdminUsersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute>
+                <AdminReportsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports/:id" element={
+              <ProtectedRoute>
+                <ReportDetailsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports/create" element={
+              <ProtectedRoute>
+                <CreateReportPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/scheduled-reports" element={
+              <ProtectedRoute>
+                <ScheduledReportsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute>
+                <AdminSettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/security" element={
+              <ProtectedRoute>
+                <AdminSecurityPage />
+              </ProtectedRoute>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </TooltipProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
+);
 
 export default App;

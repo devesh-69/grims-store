@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,7 +60,7 @@ export const useRoles = (userId?: string) => {
         .from('user_roles')
         .select('id')
         .eq('user_id', userId)
-        .eq('role', role.toString());
+        .eq('role', role);
         
       if (checkError) throw checkError;
       
