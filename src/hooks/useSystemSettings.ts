@@ -33,6 +33,17 @@ export const useSystemSettings = () => {
       }
     },
   });
+  
+  // Get a single system setting by key
+  const getSettingByKey = (key: string): SystemSetting | undefined => {
+    return systemSettings?.find(setting => setting.key === key);
+  };
+  
+  // Get a setting value with optional default
+  const getSetting = <T,>(key: string, defaultValue: T): T => {
+    const setting = getSettingByKey(key);
+    return setting ? (setting.value as T) : defaultValue;
+  };
 
   // Create or update a system setting
   const upsertSystemSetting = useMutation({
@@ -73,6 +84,28 @@ export const useSystemSettings = () => {
       setLoading(false);
     }
   });
+  
+  // Update multiple settings at once
+  const updateSettings = async (settings: Record<string, any>, description?: string) => {
+    setLoading(true);
+    try {
+      const promises = Object.entries(settings).map(([key, value]) => 
+        upsertSystemSetting.mutateAsync({ 
+          key, 
+          value,
+          description: description || `Setting for ${key}`
+        })
+      );
+      
+      await Promise.all(promises);
+      return true;
+    } catch (error) {
+      console.error("Failed to update settings:", error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Delete a system setting
   const deleteSystemSetting = useMutation({
@@ -104,6 +137,9 @@ export const useSystemSettings = () => {
     isLoadingSettings,
     upsertSystemSetting,
     deleteSystemSetting,
-    loading
+    loading,
+    getSettingByKey,
+    getSetting,
+    updateSettings
   };
 };
