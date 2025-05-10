@@ -1,413 +1,270 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Blog } from '@/types/blog';
+import { Blog, BlogCategory } from '@/types/blog';
 import { BlogFormData } from '@/types/blog-admin';
 
-// API response types for error handling
-interface ApiError {
-  message: string;
-  status: number;
-  details?: any;
-}
+// Type for blog status
+type BlogStatus = "published" | "draft";
 
 /**
- * Fetch all published blogs
- * @param limit Optional number of blogs to fetch
- * @param offset Optional pagination offset
- */
-export const fetchPublishedBlogs = async (limit?: number, offset?: number): Promise<Blog[]> => {
-  let query = supabase
-    .from('blog_with_authors')
-    .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      body,
-      cover_image_url,
-      published_at,
-      created_at,
-      updated_at,
-      category,
-      author_id,
-      featured,
-      comments_enabled,
-      meta_title,
-      meta_description,
-      canonical_url,
-      keywords,
-      og_title,
-      og_description,
-      twitter_title,
-      twitter_description,
-      seo,
-      social_preview,
-      first_name,
-      last_name,
-      avatar_url
-    `)
-    .eq('status', 'published')
-    .lte('published_at', new Date().toISOString())
-    .order('published_at', { ascending: false });
-
-  // Apply pagination if specified
-  if (limit !== undefined) {
-    query = query.limit(limit);
-  }
-  
-  if (offset !== undefined) {
-    query = query.range(offset, offset + (limit || 10) - 1);
-  }
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  // Transform the data to match our Blog type
-  return data.map((item: any): Blog => ({
-    id: item.id,
-    title: item.title,
-    slug: item.slug,
-    excerpt: item.excerpt,
-    body: item.body,
-    coverImage: item.cover_image_url,
-    category: item.category || [],
-    date: item.published_at || item.created_at,
-    featured: item.featured || false,
-    commentsEnabled: item.comments_enabled || true,
-    author: {
-      id: item.author_id,
-      name: `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Anonymous',
-      avatar: item.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
-    },
-    seo: {
-      metaTitle: item.meta_title || '',
-      metaDescription: item.meta_description || '',
-      canonicalUrl: item.canonical_url || '',
-      keywords: item.keywords || []
-    },
-    socialPreview: {
-      ogTitle: item.og_title || '',
-      ogDescription: item.og_description || '',
-      twitterTitle: item.twitter_title || '',
-      twitterDescription: item.twitter_description || ''
-    }
-  }));
-};
-
-/**
- * Fetch a single published blog by slug
- */
-export const fetchBlogBySlug = async (slug: string): Promise<Blog | null> => {
-  const { data, error } = await supabase
-    .from('blog_with_authors')
-    .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      body,
-      cover_image_url,
-      published_at,
-      created_at,
-      updated_at,
-      category,
-      featured,
-      comments_enabled,
-      author_id,
-      meta_title,
-      meta_description,
-      canonical_url,
-      keywords,
-      og_title,
-      og_description,
-      twitter_title,
-      twitter_description,
-      seo,
-      social_preview,
-      first_name,
-      last_name,
-      avatar_url
-    `)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .lte('published_at', new Date().toISOString())
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null; // No rows found
-    throw error;
-  }
-
-  return {
-    id: data.id,
-    title: data.title,
-    slug: data.slug,
-    excerpt: data.excerpt,
-    body: data.body,
-    coverImage: data.cover_image_url,
-    category: data.category || [],
-    date: data.published_at || data.created_at,
-    featured: data.featured || false,
-    commentsEnabled: data.comments_enabled || true,
-    author: {
-      id: data.author_id,
-      name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Anonymous',
-      avatar: data.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
-    },
-    seo: {
-      metaTitle: data.meta_title || '',
-      metaDescription: data.meta_description || '',
-      canonicalUrl: data.canonical_url || '',
-      keywords: data.keywords || []
-    },
-    socialPreview: {
-      ogTitle: data.og_title || '',
-      ogDescription: data.og_description || '',
-      twitterTitle: data.twitter_title || '',
-      twitterDescription: data.twitter_description || ''
-    }
-  };
-};
-
-/**
- * Admin API: Fetch all blogs (both draft and published)
+ * Fetch all blogs from the database
  */
 export const fetchAllBlogs = async (): Promise<Blog[]> => {
   const { data, error } = await supabase
-    .from('blog_with_authors')
+    .from('blogs')
     .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      body,
-      cover_image_url,
-      published_at,
-      created_at,
-      updated_at,
-      category,
-      status,
-      featured,
-      comments_enabled,
-      author_id,
-      meta_title,
-      meta_description,
-      canonical_url,
-      keywords,
-      og_title,
-      og_description,
-      twitter_title,
-      twitter_description,
-      seo,
-      social_preview,
-      first_name,
-      last_name,
-      avatar_url
+      *,
+      author:user_id (
+        id,
+        email,
+        user_metadata
+      )
     `)
-    .order('updated_at', { ascending: false });
+    .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching blogs:', error);
+    throw new Error(error.message);
+  }
 
   // Transform the data to match our Blog type
-  return data.map((item: any): Blog => ({
-    id: item.id,
-    title: item.title,
-    slug: item.slug,
-    excerpt: item.excerpt,
-    body: item.body,
-    coverImage: item.cover_image_url,
-    category: item.category || [],
-    date: item.published_at || item.created_at,
-    status: item.status,
-    featured: item.featured || false,
-    commentsEnabled: item.comments_enabled || true,
+  return data.map((blog) => ({
+    id: blog.id,
+    title: blog.title,
+    content: blog.content,
+    excerpt: blog.excerpt,
+    featured_image: blog.featured_image,
+    slug: blog.slug,
+    status: blog.status,
+    category: blog.category,
+    tags: blog.tags,
+    created_at: blog.created_at,
+    updated_at: blog.updated_at,
     author: {
-      id: item.author_id,
-      name: `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Anonymous',
-      avatar: item.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
-    },
-    seo: {
-      metaTitle: item.meta_title || '',
-      metaDescription: item.meta_description || '',
-      canonicalUrl: item.canonical_url || '',
-      keywords: item.keywords || []
-    },
-    socialPreview: {
-      ogTitle: item.og_title || '',
-      ogDescription: item.og_description || '',
-      twitterTitle: item.twitter_title || '',
-      twitterDescription: item.twitter_description || ''
+      id: blog.author?.id || 'unknown',
+      name: blog.author?.user_metadata?.first_name 
+        ? `${blog.author.user_metadata.first_name} ${blog.author.user_metadata.last_name || ''}`
+        : blog.author?.email?.split('@')[0] || 'Unknown Author',
+      avatar: blog.author?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${blog.author?.id || 'unknown'}`
     }
   }));
 };
 
 /**
- * Admin API: Fetch a single blog by ID
+ * Fetch a single blog by ID
  */
-export const fetchBlogById = async (id: string): Promise<Blog | null> => {
+export const fetchBlogById = async (id: string): Promise<Blog> => {
   const { data, error } = await supabase
-    .from('blog_with_authors')
+    .from('blogs')
     .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      body,
-      cover_image_url,
-      published_at,
-      created_at,
-      updated_at,
-      category,
-      status,
-      featured,
-      comments_enabled,
-      author_id,
-      meta_title,
-      meta_description,
-      canonical_url,
-      keywords,
-      og_title,
-      og_description,
-      twitter_title,
-      twitter_description,
-      seo,
-      social_preview,
-      first_name,
-      last_name,
-      avatar_url
+      *,
+      author:user_id (
+        id,
+        email,
+        user_metadata
+      )
     `)
     .eq('id', id)
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') return null; // No rows found
-    throw error;
+    console.error(`Error fetching blog with ID ${id}:`, error);
+    throw new Error(error.message);
   }
 
   return {
     id: data.id,
     title: data.title,
-    slug: data.slug,
+    content: data.content,
     excerpt: data.excerpt,
-    body: data.body,
-    coverImage: data.cover_image_url,
-    category: data.category || [],
-    date: data.published_at || data.created_at,
+    featured_image: data.featured_image,
+    slug: data.slug,
     status: data.status,
-    featured: data.featured || false,
-    commentsEnabled: data.comments_enabled || true,
+    category: data.category,
+    tags: data.tags,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
     author: {
-      id: data.author_id,
-      name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Anonymous',
-      avatar: data.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
-    },
-    seo: {
-      metaTitle: data.meta_title || '',
-      metaDescription: data.meta_description || '',
-      canonicalUrl: data.canonical_url || '',
-      keywords: data.keywords || []
-    },
-    socialPreview: {
-      ogTitle: data.og_title || '',
-      ogDescription: data.og_description || '',
-      twitterTitle: data.twitter_title || '',
-      twitterDescription: data.twitter_description || ''
+      id: data.author?.id || 'unknown',
+      name: data.author?.user_metadata?.first_name 
+        ? `${data.author.user_metadata.first_name} ${data.author.user_metadata.last_name || ''}`
+        : data.author?.email?.split('@')[0] || 'Unknown Author',
+      avatar: data.author?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.author?.id || 'unknown'}`
     }
   };
 };
 
 /**
- * Generate a slug from a blog title
+ * Fetch blogs by category
  */
-const generateSlug = (title: string): string => {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s]/gi, '')
-    .replace(/\s+/g, '-') + 
-    '-' + Date.now().toString().substring(9);
-};
-
-/**
- * Admin API: Create a new blog post
- */
-export const createBlog = async (blogData: BlogFormData): Promise<string> => {
-  // Generate a slug from the title if not provided
-  const slug = blogData.slug || generateSlug(blogData.title);
-
+export const fetchBlogsByCategory = async (category: BlogCategory): Promise<Blog[]> => {
   const { data, error } = await supabase
     .from('blogs')
-    .insert({
-      title: blogData.title,
-      slug: slug,
-      excerpt: blogData.excerpt,
-      body: blogData.body,
-      cover_image_url: blogData.coverImage,
-      published_at: blogData.status === 'published' ? new Date().toISOString() : null,
-      author_id: blogData.author.id,
-      status: blogData.status as 'draft' | 'published',
-      category: blogData.category || [],
-      featured: blogData.featured || false,
-      comments_enabled: blogData.commentsEnabled || true,
-      meta_title: blogData.seo?.metaTitle || '',
-      meta_description: blogData.seo?.metaDescription || '',
-      canonical_url: blogData.seo?.canonicalUrl || '',
-      keywords: blogData.seo?.keywords || [],
-      og_title: blogData.socialPreview?.ogTitle || '',
-      og_description: blogData.socialPreview?.ogDescription || '',
-      twitter_title: blogData.socialPreview?.twitterTitle || '',
-      twitter_description: blogData.socialPreview?.twitterDescription || ''
-    })
-    .select('id')
-    .single();
+    .select(`
+      *,
+      author:user_id (
+        id,
+        email,
+        user_metadata
+      )
+    `)
+    .contains('category', [category])
+    .eq('status', 'published')
+    .order('created_at', { ascending: false });
 
-  if (error) throw error;
-  return data.id;
-};
-
-/**
- * Admin API: Update an existing blog post
- */
-export const updateBlog = async (id: string, blogData: BlogFormData): Promise<void> => {
-  // Update the slug only if it was provided or if title has changed significantly
-  const slug = blogData.slug || (blogData.title ? generateSlug(blogData.title) : undefined);
-  
-  // Handle status change to published
-  let publishedAt = undefined;
-  if (blogData.status === 'published' && !blogData.publishedAt) {
-    publishedAt = new Date().toISOString();
+  if (error) {
+    console.error(`Error fetching blogs with category ${category}:`, error);
+    throw new Error(error.message);
   }
 
-  const { error } = await supabase
-    .from('blogs')
-    .update({
-      title: blogData.title,
-      slug: slug,
-      excerpt: blogData.excerpt,
-      body: blogData.body,
-      cover_image_url: blogData.coverImage,
-      published_at: publishedAt,
-      status: blogData.status as 'draft' | 'published',
-      category: blogData.category || [],
-      featured: blogData.featured || false,
-      comments_enabled: blogData.commentsEnabled || true,
-      meta_title: blogData.seo?.metaTitle || '',
-      meta_description: blogData.seo?.metaDescription || '',
-      canonical_url: blogData.seo?.canonicalUrl || '',
-      keywords: blogData.seo?.keywords || [],
-      og_title: blogData.socialPreview?.ogTitle || '',
-      og_description: blogData.socialPreview?.ogDescription || '',
-      twitter_title: blogData.socialPreview?.twitterTitle || '',
-      twitter_description: blogData.socialPreview?.twitterDescription || '',
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id);
-
-  if (error) throw error;
+  return data.map((blog) => ({
+    id: blog.id,
+    title: blog.title,
+    content: blog.content,
+    excerpt: blog.excerpt,
+    featured_image: blog.featured_image,
+    slug: blog.slug,
+    status: blog.status,
+    category: blog.category,
+    tags: blog.tags,
+    created_at: blog.created_at,
+    updated_at: blog.updated_at,
+    author: {
+      id: blog.author?.id || 'unknown',
+      name: blog.author?.user_metadata?.first_name 
+        ? `${blog.author.user_metadata.first_name} ${blog.author.user_metadata.last_name || ''}`
+        : blog.author?.email?.split('@')[0] || 'Unknown Author',
+      avatar: blog.author?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${blog.author?.id || 'unknown'}`
+    }
+  }));
 };
 
 /**
- * Admin API: Delete a blog post
+ * Fetch published blogs
+ */
+export const fetchPublishedBlogs = async (): Promise<Blog[]> => {
+  const { data, error } = await supabase
+    .from('blogs')
+    .select(`
+      *,
+      author:user_id (
+        id,
+        email,
+        user_metadata
+      )
+    `)
+    .eq('status', 'published')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching published blogs:', error);
+    throw new Error(error.message);
+  }
+
+  return data.map((blog) => ({
+    id: blog.id,
+    title: blog.title,
+    content: blog.content,
+    excerpt: blog.excerpt,
+    featured_image: blog.featured_image,
+    slug: blog.slug,
+    status: blog.status,
+    category: blog.category,
+    tags: blog.tags,
+    created_at: blog.created_at,
+    updated_at: blog.updated_at,
+    author: {
+      id: blog.author?.id || 'unknown',
+      name: blog.author?.user_metadata?.first_name 
+        ? `${blog.author.user_metadata.first_name} ${blog.author.user_metadata.last_name || ''}`
+        : blog.author?.email?.split('@')[0] || 'Unknown Author',
+      avatar: blog.author?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${blog.author?.id || 'unknown'}`
+    }
+  }));
+};
+
+/**
+ * Create a new blog
+ */
+export const createBlog = async (data: BlogFormData): Promise<Blog> => {
+  // Generate a slug from the title
+  const slug = data.title
+    .toLowerCase()
+    .replace(/[^\w\s]/gi, '')
+    .replace(/\s+/g, '-');
+  
+  // Ensure status is a valid value
+  const status = data.status as BlogStatus;
+
+  const { data: newBlog, error } = await supabase
+    .from('blogs')
+    .insert({
+      title: data.title,
+      content: data.content,
+      excerpt: data.excerpt,
+      featured_image: data.featured_image,
+      slug,
+      status,
+      category: data.category,
+      tags: data.tags,
+      user_id: data.author.id
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating blog:', error);
+    throw new Error(error.message);
+  }
+
+  return {
+    ...newBlog,
+    author: data.author
+  };
+};
+
+/**
+ * Update an existing blog
+ */
+export const updateBlog = async (id: string, data: BlogFormData): Promise<Blog> => {
+  // Generate a slug from the title if not provided
+  const slug = data.slug || data.title
+    .toLowerCase()
+    .replace(/[^\w\s]/gi, '')
+    .replace(/\s+/g, '-');
+  
+  // Ensure status is a valid value
+  const status = data.status as BlogStatus;
+
+  const { data: updatedBlog, error } = await supabase
+    .from('blogs')
+    .update({
+      title: data.title,
+      content: data.content,
+      excerpt: data.excerpt,
+      featured_image: data.featured_image,
+      slug,
+      status,
+      category: data.category,
+      tags: data.tags,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating blog with ID ${id}:`, error);
+    throw new Error(error.message);
+  }
+
+  return {
+    ...updatedBlog,
+    author: data.author
+  };
+};
+
+/**
+ * Delete a blog
  */
 export const deleteBlog = async (id: string): Promise<void> => {
   const { error } = await supabase
@@ -415,31 +272,8 @@ export const deleteBlog = async (id: string): Promise<void> => {
     .delete()
     .eq('id', id);
 
-  if (error) throw error;
+  if (error) {
+    console.error(`Error deleting blog with ID ${id}:`, error);
+    throw new Error(error.message);
+  }
 };
-
-/**
- * Admin API: Publish a blog post
- */
-export const publishBlog = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('blogs')
-    .update({
-      status: 'published',
-      published_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id);
-
-  if (error) throw error;
-};
-
-/**
- * Admin API: Update the status of a blog post
- */
-export const updateBlogStatus = async (id: string, status: "published" | "draft"): Promise<void> => {
-  const { error } = await supabase.from("blogs").update({ status }).eq("id", id);
-  if (error) throw error;
-};
-
-// Now let's create the Edge Functions for RESTful API endpoints

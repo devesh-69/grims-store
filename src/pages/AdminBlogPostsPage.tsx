@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Blog } from "@/types/blog";
@@ -16,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export const AdminBlogPostsPage = () => {
   useTitle("Blog Posts Management | Admin");
+  const navigate = useNavigate();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentBlog, setCurrentBlog] = useState<Blog | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
