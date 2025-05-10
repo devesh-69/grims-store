@@ -50,8 +50,8 @@ export const useSystemSettings = () => {
     mutationFn: async ({ 
       key,
       value,
-      isPublic = false,
-      description = ''
+      isPublic,
+      description
     }: { 
       key: string;
       value: any;
@@ -66,8 +66,8 @@ export const useSystemSettings = () => {
             action: 'upsert',
             key,
             value,
-            is_public: isPublic,
-            description
+            is_public: isPublic || false,
+            description: description || ''
           }
         });
         

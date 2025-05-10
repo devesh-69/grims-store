@@ -697,36 +697,6 @@ export type Database = {
           },
         ]
       }
-      system_settings: {
-        Row: {
-          description: string | null
-          id: string
-          is_public: boolean
-          key: string
-          updated_at: string
-          updated_by: string | null
-          value: Json
-        }
-        Insert: {
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          key: string
-          updated_at?: string
-          updated_by?: string | null
-          value: Json
-        }
-        Update: {
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          key?: string
-          updated_at?: string
-          updated_by?: string | null
-          value?: Json
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -843,7 +813,7 @@ export type Database = {
       }
     }
     Enums: {
-      user_role: "admin" | "moderator" | "user" | "editor" | "viewer"
+      user_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -959,7 +929,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: ["admin", "moderator", "user", "editor", "viewer"],
+      user_role: ["admin", "moderator", "user"],
     },
   },
 } as const

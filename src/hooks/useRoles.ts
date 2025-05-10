@@ -61,7 +61,7 @@ export const useRoles = (userId?: string) => {
         .from('user_roles')
         .select('id')
         .eq('user_id', userId)
-        .eq('role', role);
+        .eq('role', role.toString());
         
       if (checkError) throw checkError;
       
@@ -74,7 +74,7 @@ export const useRoles = (userId?: string) => {
         .from('user_roles')
         .insert({ 
           user_id: userId, 
-          role 
+          role: role.toString() 
         })
         .select()
         .single();
@@ -128,4 +128,5 @@ export const useRoles = (userId?: string) => {
   };
 };
 
+// Export type to fix the isolatedModules error
 export type { UserRole };

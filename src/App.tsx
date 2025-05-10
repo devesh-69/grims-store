@@ -1,5 +1,4 @@
-
-import { Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -20,7 +19,6 @@ import AdminLogsPage from "./pages/AdminLogsPage";
 import AdminEmailTemplatesPage from "./pages/AdminEmailTemplatesPage";
 import AdminApiKeysPage from "./pages/AdminApiKeysPage";
 import MaintenancePage from "./pages/MaintenancePage";
-import AdminBlogPostsPage from "./pages/AdminBlogPostsPage";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -44,28 +42,29 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <MaintenanceWrapper>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/features" element={<AdminFeaturesPage />} />
-            <Route path="/admin/settings" element={<AdminSettingsPage />} />
-            <Route path="/admin/logs" element={<AdminLogsPage />} />
-            <Route path="/admin/email-templates" element={<AdminEmailTemplatesPage />} />
-            <Route path="/admin/api-keys" element={<AdminApiKeysPage />} />
-            <Route path="/admin/blog-posts" element={<AdminBlogPostsPage />} />
-          </Routes>
-        </MaintenanceWrapper>
-        <Toaster position="top-right" />
+        <Router>
+          <MaintenanceWrapper>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/features" element={<AdminFeaturesPage />} />
+              <Route path="/admin/settings" element={<AdminSettingsPage />} />
+              <Route path="/admin/logs" element={<AdminLogsPage />} />
+              <Route path="/admin/email-templates" element={<AdminEmailTemplatesPage />} />
+              <Route path="/admin/api-keys" element={<AdminApiKeysPage />} />
+            </Routes>
+          </MaintenanceWrapper>
+          <Toaster position="top-right" />
+        </Router>
       </ThemeProvider>
     </QueryClientProvider>
   );

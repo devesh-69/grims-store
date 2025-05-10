@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Blog } from "@/types/blog";
@@ -15,21 +14,20 @@ import { Input } from "@/components/ui/input";
 import { fetchAllBlogs, createBlog, updateBlog, deleteBlog } from "@/api/blogs";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const AdminBlogPostsPage = () => {
+const AdminBlogPostsPage = () => {
   useTitle("Blog Posts Management | Admin");
-  const navigate = useNavigate();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentBlog, setCurrentBlog] = useState<Blog | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { user, checkUserRole } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch blogs from API
   const { data: blogs = [], isLoading, error } = useQuery({
     queryKey: ['admin-blogs'],
     queryFn: fetchAllBlogs,
-    enabled: !!checkUserRole('admin') || !!checkUserRole('editor'), // Only fetch if user is admin or editor
+    enabled: !!user?.isAdmin, // Only fetch if user is admin
   });
 
   // Create blog mutation
@@ -126,13 +124,6 @@ export const AdminBlogPostsPage = () => {
         cat.toLowerCase().includes(searchTerm.toLowerCase())
       ))
   );
-
-  useEffect(() => {
-    if (!checkUserRole('admin') && !checkUserRole('editor')) {
-      navigate('/');
-      toast.error("You don't have permission to access this page");
-    }
-  }, [navigate, checkUserRole]);
 
   return (
     <AdminLayout>
