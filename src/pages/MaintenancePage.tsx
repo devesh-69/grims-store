@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { RefreshCcw, Settings, Tool } from "lucide-react";
+import { RefreshCcw, Settings } from "lucide-react";
 
 const MaintenancePage = () => {
   return (
@@ -26,7 +26,7 @@ const MaintenancePage = () => {
               className="relative w-32 h-32"
             >
               <Settings size={64} className="absolute inset-0 m-auto text-primary opacity-20" />
-              <Tool size={32} className="absolute inset-0 m-auto text-primary" />
+              <Settings size={32} className="absolute inset-0 m-auto text-primary" />
             </motion.div>
           </div>
           
