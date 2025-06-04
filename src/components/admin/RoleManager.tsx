@@ -27,7 +27,7 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
     }
     
     try {
-      await assignRole({ userId, role: selectedRole });
+      await assignRole(userId, selectedRole);
     } catch (error) {
       // Error is handled in the mutation
     }
