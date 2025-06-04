@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Users, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,17 @@ const AdminDashboard = () => {
     { name: 'May', users: 189, revenue: 4800 },
     { name: 'Jun', users: 239, revenue: 3800 },
   ];
+
+  const chartConfig = {
+    users: {
+      label: "Users",
+      color: "hsl(var(--chart-1))",
+    },
+    revenue: {
+      label: "Revenue",
+      color: "hsl(var(--chart-2))",
+    },
+  };
 
   const getIcon = (metric: string) => {
     switch (metric) {
@@ -130,17 +142,44 @@ const AdminDashboard = () => {
               <CardTitle>Analytics Overview</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="users" stroke="#8884d8" activeDot={{ r: 8 }} />
-                  <Line type="monotone" dataKey="revenue" stroke="#82ca9d" />
+              <ChartContainer config={chartConfig}>
+                <LineChart
+                  accessibilityLayer
+                  data={chartData}
+                  margin={{
+                    left: 12,
+                    right: 12,
+                  }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                  <Line
+                    dataKey="users"
+                    type="monotone"
+                    stroke="var(--color-users)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    dataKey="revenue"
+                    type="monotone"
+                    stroke="var(--color-revenue)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
 
