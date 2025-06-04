@@ -17,7 +17,7 @@ interface RoleManagerProps {
 
 export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
   const { user } = useAuth();
-  const { userRoles, isLoadingRoles, assignRole, removeRole, loading } = useRoles(userId);
+  const { userRoles, isLoading, assignRole, removeRole, isAddingRole, isRemovingRole } = useRoles();
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   
   const handleAssignRole = async () => {
@@ -27,7 +27,7 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
     }
     
     try {
-      await assignRole.mutateAsync({ userId, role: selectedRole });
+      await assignRole({ userId, role: selectedRole });
     } catch (error) {
       // Error is handled in the mutation
     }
@@ -43,7 +43,7 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
     }
     
     try {
-      await removeRole.mutateAsync(roleId);
+      await removeRole(roleId);
     } catch (error) {
       // Error is handled in the mutation
     }
@@ -77,7 +77,7 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-5">
-        {isLoadingRoles ? (
+        {isLoading ? (
           <div className="flex justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
@@ -101,7 +101,7 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
                         size="icon"
                         className="h-4 w-4 ml-1 p-0 hover:bg-transparent"
                         onClick={() => handleRemoveRole(userRole.id, userRole.role)}
-                        disabled={loading}
+                        disabled={isRemovingRole}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -131,10 +131,10 @@ export function RoleManager({ userId, userName = "User" }: RoleManagerProps) {
                 
                 <Button 
                   onClick={handleAssignRole}
-                  disabled={loading}
+                  disabled={isAddingRole}
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  {loading ? (
+                  {isAddingRole ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Assigning...

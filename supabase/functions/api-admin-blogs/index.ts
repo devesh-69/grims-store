@@ -57,6 +57,8 @@ serve(async (req) => {
       )
     }
 
+    console.log('User authenticated:', user.id)
+
     // Handle different endpoints
     if (req.method === 'POST' && isPublishEndpoint && blogId) {
       // Publish endpoint: POST /api/admin/blogs/{id}/publish
@@ -70,6 +72,7 @@ serve(async (req) => {
         .eq('id', blogId);
 
       if (error) {
+        console.error('Publish error:', error)
         return new Response(
           JSON.stringify({ error: error.message }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -84,26 +87,26 @@ serve(async (req) => {
     else if (req.method === 'POST' && !blogId) {
       // Create endpoint: POST /api/admin/blogs
       const blogData = await req.json();
+      console.log('Creating blog with data:', blogData)
       
       // Generate a slug from the title if not provided
       const slug = blogData.slug || generateSlug(blogData.title);
       
-      // Fix: Use the authenticated user's ID directly instead of trying to access the users table
+      // Use the authenticated user's ID directly
       const { data, error } = await supabaseClient
         .from('blogs')
         .insert({
           title: blogData.title,
           slug: slug,
           excerpt: blogData.excerpt,
-          body: blogData.body || '',  // Ensure body is never null
+          body: blogData.body || '',
           cover_image_url: blogData.coverImage,
           published_at: blogData.status === 'published' ? new Date().toISOString() : null,
-          author_id: user.id, // Use the authenticated user's ID
+          author_id: user.id,
           status: blogData.status || 'draft',
           category: blogData.category || [],
           featured: blogData.featured || false,
           comments_enabled: blogData.commentsEnabled || true,
-          // Ensure SEO data is correctly saved
           meta_title: blogData.seo?.metaTitle || blogData.title || '',
           meta_description: blogData.seo?.metaDescription || blogData.excerpt || '',
           canonical_url: blogData.seo?.canonicalUrl || '',
@@ -117,12 +120,14 @@ serve(async (req) => {
         .single();
 
       if (error) {
+        console.error('Blog creation error:', error)
         return new Response(
           JSON.stringify({ error: error.message }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         )
       }
 
+      console.log('Blog created successfully:', data)
       return new Response(
         JSON.stringify({ id: data.id, success: true, message: 'Blog created successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 201 }
@@ -131,6 +136,7 @@ serve(async (req) => {
     else if (req.method === 'PUT' && blogId) {
       // Update endpoint: PUT /api/admin/blogs/{id}
       const blogData = await req.json();
+      console.log('Updating blog with data:', blogData)
       
       // Generate a slug from the title if it was provided
       const slug = blogData.slug || (blogData.title ? generateSlug(blogData.title) : undefined);
@@ -147,14 +153,13 @@ serve(async (req) => {
           title: blogData.title,
           slug: slug,
           excerpt: blogData.excerpt,
-          body: blogData.body || '',  // Ensure body is never null
+          body: blogData.body || '',
           cover_image_url: blogData.coverImage,
           published_at: publishedAt,
           status: blogData.status,
           category: blogData.category || [],
           featured: blogData.featured || false,
           comments_enabled: blogData.commentsEnabled || true,
-          // Ensure SEO data is correctly updated
           meta_title: blogData.seo?.metaTitle || blogData.title || '',
           meta_description: blogData.seo?.metaDescription || blogData.excerpt || '',
           canonical_url: blogData.seo?.canonicalUrl || '',
@@ -168,6 +173,7 @@ serve(async (req) => {
         .eq('id', blogId);
 
       if (error) {
+        console.error('Blog update error:', error)
         return new Response(
           JSON.stringify({ error: error.message }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -187,6 +193,7 @@ serve(async (req) => {
         .eq('id', blogId);
 
       if (error) {
+        console.error('Blog deletion error:', error)
         return new Response(
           JSON.stringify({ error: error.message }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -205,6 +212,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
     )
   } catch (error) {
+    console.error('Function error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
