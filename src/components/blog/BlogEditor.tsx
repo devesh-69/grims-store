@@ -61,14 +61,10 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
   const [readabilityScore, setReadabilityScore] = useState(0);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   
-  // Content analysis
   const analyzeContent = (content: string) => {
-    // Count words
     const words = content.trim().split(/\s+/).length;
     setContentWordCount(words);
     
-    // Simple readability score (0-100)
-    // This is a simplified version - you might want to implement a proper algorithm
     const avgSentenceLength = content.split(/[.!?]+/).filter(Boolean).reduce((sum, sentence) => {
       return sum + sentence.trim().split(/\s+/).length;
     }, 0) / (content.split(/[.!?]+/).filter(Boolean).length || 1);
@@ -77,19 +73,17 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
       return sum + word.length;
     }, 0) / (content.split(/\s+/).length || 1);
     
-    // Lower is better for readability
     let score = 100 - (avgSentenceLength * 4) - (avgWordLength * 3);
     setReadabilityScore(Math.max(0, Math.min(100, score)));
   };
   
-  // Initialize the form with the blog data or default values
   const form = useForm<BlogFormValues>({
     resolver: zodResolver(blogFormSchema),
     defaultValues: blog
       ? {
           title: blog.title,
           excerpt: blog.excerpt,
-          content: blog.body || blog.content || "",
+          content: blog.body || "",
           coverImage: blog.coverImage,
           date: blog.date ? new Date(blog.date) : new Date(),
           status: blog.status || "draft",
@@ -122,13 +116,11 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
         },
   });
 
-  // Update content analysis when content changes
   useEffect(() => {
     const content = form.watch("content");
     analyzeContent(content);
   }, [form.watch("content")]);
 
-  // Update cover image preview when the URL changes
   useEffect(() => {
     const coverImage = form.watch("coverImage");
     if (coverImage) {
@@ -138,12 +130,10 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
     }
   }, [form.watch("coverImage")]);
 
-  // Handle form submission
   const onSubmit = async (data: BlogFormValues) => {
     setIsSubmitting(true);
     
     try {
-      // Convert form data to the required format
       const formattedData: BlogFormData = {
         id: blog?.id,
         title: data.title,
@@ -153,10 +143,10 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
         date: data.date ? format(data.date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         author: {
           id: user?.id || blog?.author.id || "anonymous",
-          name: user?.user_metadata?.first_name || blog?.author.name || "Anonymous",
+          name: `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || user?.email?.split('@')[0] || blog?.author.name || "Anonymous",
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || blog?.author.id || "anonymous"}`,
         },
-        status: data.status as 'draft' | 'published',
+        status: data.status,
         category: data.category ? data.category.split(',').map(cat => cat.trim()) : [],
         seo: {
           metaTitle: data.metaTitle,
@@ -214,10 +204,10 @@ Summarize the key takeaways from this post.`;
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Tabs defaultValue="content" className="w-full">
             <TabsList className="mb-6">
-              <TabsTrigger value="content" aria-label="Content tab">Content</TabsTrigger>
-              <TabsTrigger value="seo" aria-label="SEO tab">SEO</TabsTrigger>
-              <TabsTrigger value="social" aria-label="Social Preview tab">Social Preview</TabsTrigger>
-              <TabsTrigger value="settings" aria-label="Settings tab">Settings</TabsTrigger>
+              <TabsTrigger value="content">Content</TabsTrigger>
+              <TabsTrigger value="seo">SEO</TabsTrigger>
+              <TabsTrigger value="social">Social Preview</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
             
             <TabsContent value="content" className="space-y-6">
@@ -228,13 +218,11 @@ Summarize the key takeaways from this post.`;
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="title">Title</FormLabel>
+                        <FormLabel>Title</FormLabel>
                         <FormControl>
                           <Input
-                            id="title"
                             placeholder="Enter blog title"
                             {...field}
-                            aria-required="true"
                           />
                         </FormControl>
                         <FormMessage />
@@ -247,14 +235,12 @@ Summarize the key takeaways from this post.`;
                     name="excerpt"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="excerpt">Excerpt</FormLabel>
+                        <FormLabel>Excerpt</FormLabel>
                         <FormControl>
                           <Textarea
-                            id="excerpt"
                             placeholder="Brief summary of the blog post"
                             className="resize-none h-20"
                             {...field}
-                            aria-required="true"
                           />
                         </FormControl>
                         <FormMessage />
@@ -281,11 +267,9 @@ Summarize the key takeaways from this post.`;
                       <FormItem>
                         <FormControl>
                           <Textarea
-                            id="content"
                             placeholder="Write your blog post content here..."
                             className="resize-none min-h-[400px] font-mono"
                             {...field}
-                            aria-required="true"
                           />
                         </FormControl>
                         <FormMessage />
@@ -318,28 +302,6 @@ Summarize the key takeaways from this post.`;
                          readabilityScore > 40 ? "Moderate" : "Difficult to read"}
                       </p>
                     </div>
-
-                    <div className="pt-2">
-                      <h4 className="text-sm font-medium mb-2">Suggestions</h4>
-                      <ul className="text-xs space-y-2">
-                        {contentWordCount < 300 && (
-                          <li className="flex items-start gap-2">
-                            <span className="text-yellow-500">●</span>
-                            <span>Consider adding more content (aim for 300+ words)</span>
-                          </li>
-                        )}
-                        {readabilityScore < 50 && (
-                          <li className="flex items-start gap-2">
-                            <span className="text-yellow-500">●</span>
-                            <span>Try using shorter sentences to improve readability</span>
-                          </li>
-                        )}
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-500">●</span>
-                          <span>Use headings to structure your content</span>
-                        </li>
-                      </ul>
-                    </div>
                   </div>
 
                   <FormField
@@ -347,29 +309,12 @@ Summarize the key takeaways from this post.`;
                     name="coverImage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="coverImage">Cover Image URL</FormLabel>
+                        <FormLabel>Cover Image URL</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Input
-                              id="coverImage"
-                              placeholder="https://example.com/image.jpg"
-                              {...field}
-                              aria-required="true"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                              onClick={() => {
-                                // In a real app, this would open an image selector
-                                form.setValue("coverImage", "https://picsum.photos/800/400");
-                                setCoverImagePreview("https://picsum.photos/800/400");
-                              }}
-                            >
-                              <Upload className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Input
+                            placeholder="https://example.com/image.jpg"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
 
@@ -399,10 +344,9 @@ Summarize the key takeaways from this post.`;
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="category">Category</FormLabel>
+                        <FormLabel>Category</FormLabel>
                         <FormControl>
                           <Input
-                            id="category"
                             placeholder="e.g. Technology, Travel"
                             {...field}
                           />
@@ -417,10 +361,10 @@ Summarize the key takeaways from this post.`;
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="status">Publication Status</FormLabel>
+                        <FormLabel>Publication Status</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger id="status">
+                            <SelectTrigger>
                               <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                           </FormControl>
@@ -439,14 +383,12 @@ Summarize the key takeaways from this post.`;
                     name="date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel htmlFor="date">Publication Date</FormLabel>
+                        <FormLabel>Publication Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant={"outline"}
-                                id="date"
-                                aria-label="Select date"
                                 className={cn(
                                   "w-full pl-3 text-left font-normal",
                                   !field.value && "text-muted-foreground"
@@ -758,7 +700,9 @@ Summarize the key takeaways from this post.`;
           </Tabs>
           
           <div className="flex justify-end gap-4 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>

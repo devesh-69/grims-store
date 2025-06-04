@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Blog } from "@/types/blog";
@@ -23,14 +24,11 @@ const AdminBlogPostsPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch blogs from API
   const { data: blogs = [], isLoading, error } = useQuery({
     queryKey: ['admin-blogs'],
     queryFn: fetchAllBlogs,
-    enabled: !!user?.isAdmin, // Only fetch if user is admin
   });
 
-  // Create blog mutation
   const createBlogMutation = useMutation({
     mutationFn: createBlog,
     onSuccess: () => {
@@ -44,7 +42,6 @@ const AdminBlogPostsPage = () => {
     }
   });
 
-  // Update blog mutation
   const updateBlogMutation = useMutation({
     mutationFn: ({ id, data }: { id: string, data: BlogFormData }) => 
       updateBlog(id, data),
@@ -59,7 +56,6 @@ const AdminBlogPostsPage = () => {
     }
   });
 
-  // Delete blog mutation
   const deleteBlogMutation = useMutation({
     mutationFn: deleteBlog,
     onSuccess: () => {
@@ -81,24 +77,19 @@ const AdminBlogPostsPage = () => {
   };
 
   const handleView = (id: string) => {
-    // Find the blog to get its slug
     const blog = blogs.find(b => b.id === id);
-    if (blog) {
-      // In a real app we would use the slug to view the blog post
-      // For now, just open in a new tab with ID
-      window.open(`/blog/${id}`, "_blank");
+    if (blog && blog.slug) {
+      window.open(`/blog/${blog.slug}`, "_blank");
     }
   };
 
   const handleSave = async (blogData: BlogFormData) => {
     if (blogData.id) {
-      // Update existing blog
       updateBlogMutation.mutate({
         id: blogData.id,
         data: blogData
       });
     } else {
-      // Create new blog
       createBlogMutation.mutate({
         ...blogData,
         author: {
@@ -115,7 +106,6 @@ const AdminBlogPostsPage = () => {
     setCurrentBlog(undefined);
   };
 
-  // Filter blogs based on search term
   const filteredBlogs = blogs.filter(
     (blog) =>
       blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

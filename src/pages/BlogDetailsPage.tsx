@@ -20,12 +20,10 @@ const BlogDetailsPage = () => {
     enabled: !!slug,
   });
 
-  // Set document title and meta description
   useEffect(() => {
     if (blog) {
       document.title = `${blog.title} | Blog`;
       
-      // Update meta description
       const metaDescription = document.querySelector('meta[name="description"]');
       if (metaDescription) {
         metaDescription.setAttribute('content', blog.excerpt);
@@ -149,9 +147,10 @@ const BlogDetailsPage = () => {
           </div>
 
           <div className="prose prose-lg dark:prose-invert max-w-none">
-            {/* Fix: Use blog.body instead of blog.content which doesn't exist */}
             <div 
-              dangerouslySetInnerHTML={{ __html: blog.body.replace(/\n/g, '<br />') }} 
+              dangerouslySetInnerHTML={{ 
+                __html: blog.body.replace(/\n/g, '<br />') 
+              }} 
             />
           </div>
         </div>
