@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
@@ -27,22 +28,9 @@ const LoginPage = () => {
       }
       return signIn(email, password);
     },
-    onSuccess: (response: any) => {
-      if (response.error) {
-        toast.error(response.error.message || "Login failed. Please check your credentials.");
-      }
-      if (response.data.user) {
-        const user = response.data.user;
-        // Check user_metadata or app_metadata for admin status
-        const isAdmin = user.app_metadata?.is_admin === true || user.user_metadata?.is_admin === true;
-        
-        // Redirect based on admin status
-        if (isAdmin) {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
-      }
+    onSuccess: () => {
+      // The success toast is handled in the AuthContext
+      // Navigate will be handled by the AuthContext as well
     },
     onError: (err: any) => {
       toast.error(err.message || "Login failed. Please check your credentials.");

@@ -1,8 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/auth';
 import { UserProfile, FilterCriteria, UserActionResult, UserFilters, UserStatus } from '@/types/user';
-import { Feature, SystemSetting, SystemLog } from '@/types/auth';
 
 /**
  * Fetch all users with their profiles
@@ -31,7 +29,9 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
     last_login: profile.last_login || '',
     created_at: profile.created_at,
     updated_at: profile.updated_at,
-    custom_attributes: profile.custom_attributes || {},
+    custom_attributes: (typeof profile.custom_attributes === 'object' && profile.custom_attributes !== null) 
+      ? profile.custom_attributes as Record<string, any>
+      : {},
     roles: [] // Will be populated separately
   }));
 };
@@ -73,7 +73,7 @@ export const addUserRole = async (userId: string, role: UserRole): Promise<strin
     .from('user_roles')
     .insert({
       user_id: userId,
-      role: role.toString()
+      role: role as "admin" | "moderator" | "user" | "editor" | "viewer"
     })
     .select('id')
     .single();
@@ -135,7 +135,7 @@ export const createFeatureFlag = async (
 /**
  * Get all feature flags
  */
-export const getFeatureFlags = async (): Promise<Feature[]> => {
+export const getFeatureFlags = async (): Promise<any[]> => {
   // Use Edge Functions to access the feature_flags table
   const { data, error } = await supabase
     .functions.invoke('admin-feature-flags', {
@@ -145,7 +145,7 @@ export const getFeatureFlags = async (): Promise<Feature[]> => {
     });
 
   if (error) throw error;
-  return data as Feature[];
+  return data as any[];
 };
 
 /**
@@ -233,7 +233,7 @@ export const upsertSystemSetting = async (
 /**
  * Get all system settings
  */
-export const getSystemSettings = async (): Promise<SystemSetting[]> => {
+export const getSystemSettings = async (): Promise<any[]> => {
   // Use Edge Functions to access the system_settings table
   const { data, error } = await supabase
     .functions.invoke('admin-system-settings', {
@@ -243,7 +243,7 @@ export const getSystemSettings = async (): Promise<SystemSetting[]> => {
     });
 
   if (error) throw error;
-  return data as SystemSetting[];
+  return data as any[];
 };
 
 /**

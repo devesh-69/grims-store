@@ -1,131 +1,99 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types/auth";
 
-interface RoleAssignment {
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { UserRole } from '@/types/auth';
+import { addUserRole, removeUserRole, getUserRoles } from '@/api/users';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export interface UserRoleData {
   id: string;
-  userId: string;
+  user_id: string;
   role: UserRole;
-  createdAt: string;
+  created_at: string;
 }
 
-export const useRoles = (userId?: string) => {
-  const { user } = useAuth();
+export const useRoles = () => {
   const queryClient = useQueryClient();
-  const [loading, setLoading] = useState(false);
-  
-  const currentUserId = userId || user?.id;
 
-  // Fetch roles for a specific user
-  const { data: userRoles = [], isLoading: isLoadingRoles } = useQuery({
-    queryKey: ['user-roles', currentUserId],
-    queryFn: async () => {
-      if (!currentUserId) return [];
-      
+  // Fetch all user roles
+  const { data: userRoles = [], isLoading, error } = useQuery({
+    queryKey: ['userRoles'],
+    queryFn: async (): Promise<UserRoleData[]> => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('id, user_id, role, created_at')
-        .eq('user_id', currentUserId);
-        
-      if (error) {
-        toast.error(`Failed to fetch roles: ${error.message}`);
-        return [];
-      }
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      return data.map(role => ({
-        id: role.id,
-        userId: role.user_id,
-        role: role.role as UserRole,
-        createdAt: role.created_at
-      }));
-    },
-    enabled: !!currentUserId,
-  });
-
-  // Check if user has a specific role
-  const hasRole = useCallback((role: UserRole) => {
-    return userRoles.some(r => r.role === role);
-  }, [userRoles]);
-
-  // Assign a role to a user
-  const assignRole = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string, role: UserRole }) => {
-      setLoading(true);
-      
-      // First check if the user already has this role
-      const { data: existingRoles, error: checkError } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('role', role);
-        
-      if (checkError) throw checkError;
-      
-      if (existingRoles && existingRoles.length > 0) {
-        throw new Error(`User already has the ${role} role`);
-      }
-      
-      // Convert UserRole to string to match the database schema
-      const { data, error } = await supabase
-        .from('user_roles')
-        .insert({ 
-          user_id: userId, 
-          role: role.toString() 
-        })
-        .select()
-        .single();
-        
-      if (error) {
-        throw error;
-      }
-      
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
-      toast.success('Role assigned successfully');
-      setLoading(false);
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to assign role: ${error.message}`);
-      setLoading(false);
+      if (error) throw error;
+      return data as UserRoleData[];
     }
   });
 
-  // Remove a role from a user
-  const removeRole = useMutation({
-    mutationFn: async (roleId: string) => {
-      setLoading(true);
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('id', roleId);
-        
-      if (error) throw error;
-    },
+  // Add role mutation
+  const addRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: UserRole }) => 
+      addUserRole(userId, role),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['userRoles'] });
+      toast.success('Role added successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to add role: ${error.message}`);
+    }
+  });
+
+  // Remove role mutation
+  const removeRoleMutation = useMutation({
+    mutationFn: removeUserRole,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userRoles'] });
       toast.success('Role removed successfully');
-      setLoading(false);
     },
     onError: (error: Error) => {
       toast.error(`Failed to remove role: ${error.message}`);
-      setLoading(false);
     }
   });
 
+  // Get roles for specific user
+  const getUserRolesQuery = (userId: string) => useQuery({
+    queryKey: ['userRoles', userId],
+    queryFn: () => getUserRoles(userId),
+    enabled: !!userId
+  });
+
+  // Assign role directly via Supabase
+  const assignRole = async (userId: string, role: UserRole) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: role as "admin" | "moderator" | "user" | "editor" | "viewer"
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['userRoles'] });
+      toast.success('Role assigned successfully');
+      return data;
+    } catch (error: any) {
+      toast.error(`Failed to assign role: ${error.message}`);
+      throw error;
+    }
+  };
+
   return {
     userRoles,
-    isLoadingRoles,
-    hasRole,
+    isLoading,
+    error,
+    addRole: addRoleMutation.mutate,
+    removeRole: removeRoleMutation.mutate,
+    getUserRoles: getUserRolesQuery,
     assignRole,
-    removeRole,
-    loading
+    isAddingRole: addRoleMutation.isPending,
+    isRemovingRole: removeRoleMutation.isPending
   };
 };
-
-// Export type to fix the isolatedModules error
-export type { UserRole };
