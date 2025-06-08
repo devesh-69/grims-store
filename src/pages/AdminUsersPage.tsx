@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTitle } from "@/hooks/useTitle";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -11,20 +12,73 @@ import { UserStats } from "@/components/users/UserStats";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Filter, Save, Download, UserPlus, UsersRound, UserCheck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const AdminUsersPage = () => {
   useTitle("User Management | Admin");
-  const [users, setUsers] = useState<UserProfile[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<UserFilters>({});
   const [showFilters, setShowFilters] = useState(false);
   const [savedSegments, setSavedSegments] = useState<SavedSegment[]>([]);
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
+  // Fetch users from profiles table
+  const { data: users = [], isLoading, refetch } = useQuery({
+    queryKey: ['adminUsers'],
+    queryFn: async (): Promise<UserProfile[]> => {
+      console.log('Fetching users from profiles table...');
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('Fetched profiles:', profiles);
+
+      // Try to get user emails from edge function (admin only)
+      let userEmails: { [key: string]: string } = {};
+      try {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('api-admin-users/get-users-with-emails');
+        if (!emailError && emailData) {
+          emailData.forEach((user: any) => {
+            userEmails[user.id] = user.email;
+          });
+        }
+      } catch (error) {
+        console.log('Could not fetch emails (user may not be admin):', error);
+      }
+
+      // Map profiles to UserProfile format
+      const userProfiles: UserProfile[] = profiles.map((profile): UserProfile => ({
+        id: profile.id,
+        email: userEmails[profile.id] || 'Email not available',
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        avatar_url: profile.avatar_url || '',
+        status: (profile.status || 'active') as any,
+        company: profile.company || '',
+        location: profile.location || '',
+        signup_source: profile.signup_source || '',
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+        last_login: profile.last_login || undefined,
+        roles: ['user'], // Default role, will be updated if we can fetch actual roles
+        spend: profile.spend || 0,
+        custom_attributes: profile.custom_attributes || {},
+        referral_code: profile.referral_code || '',
+      }));
+
+      return userProfiles;
+    }
+  });
+
   useEffect(() => {
-    fetchUsers();
     fetchSavedSegments();
   }, []);
 
@@ -32,77 +86,26 @@ const AdminUsersPage = () => {
     applyFilters();
   }, [users, filters, activeSegment]);
 
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      // In a real implementation, this would fetch from Supabase
-      // const { data, error } = await supabase
-      //   .from('profiles')
-      //   .select('*, user_roles(role)')
-      
-      // For now, we'll use mock data
-      setTimeout(() => {
-        const mockUsers: UserProfile[] = Array(20)
-          .fill(0)
-          .map((_, index) => ({
-            id: `user-${index}`,
-            email: `user${index}@example.com`,
-            first_name: `First${index}`,
-            last_name: `Last${index}`,
-            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${index}`,
-            status: index % 5 === 0 ? "inactive" : "active",
-            company: index % 3 === 0 ? `Company ${index}` : undefined,
-            location: index % 4 === 0 ? "New York" : index % 4 === 1 ? "London" : index % 4 === 2 ? "Tokyo" : "Sydney",
-            signup_source: index % 3 === 0 ? "google" : index % 3 === 1 ? "email" : "github",
-            created_at: new Date(Date.now() - index * 86400000).toISOString(),
-            updated_at: new Date(Date.now() - index * 43200000).toISOString(),
-            last_login: index % 3 === 0 ? new Date(Date.now() - index * 3600000).toISOString() : undefined,
-            roles: index % 10 === 0 ? ["admin"] : index % 5 === 0 ? ["user"] : ["user"],
-            spend: index * 10.5,
-            custom_attributes: index % 2 === 0 ? { preferences: { theme: "dark" } } : undefined,
-          }));
-        setUsers(mockUsers);
-        setFilteredUsers(mockUsers);
-        setIsLoading(false);
-      }, 500);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast.error("Failed to load users");
-      setIsLoading(false);
-    }
-  };
-
   const fetchSavedSegments = async () => {
     try {
-      // In a real implementation, this would fetch from Supabase
-      // const { data, error } = await supabase.from('saved_segments').select('*')
+      const { data, error } = await supabase
+        .from('saved_segments')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      // For now, we'll use mock data
-      const mockSegments: SavedSegment[] = [
-        {
-          id: "segment-1",
-          name: "High Spenders",
-          description: "Users who spent more than $100",
-          filter_criteria: {
-            conditions: [{ field: "spend", operator: "greater_than", value: 100 }],
-            conjunction: "and",
-          },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: "segment-2",
-          name: "Inactive Users",
-          description: "Users who haven't logged in for 30 days",
-          filter_criteria: {
-            conditions: [{ field: "status", operator: "equals", value: "inactive" }],
-            conjunction: "and",
-          },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setSavedSegments(mockSegments);
+      if (error) throw error;
+      
+      const segments: SavedSegment[] = data.map(segment => ({
+        id: segment.id,
+        name: segment.name,
+        description: segment.description,
+        filter_criteria: segment.filter_criteria,
+        created_by: segment.created_by,
+        created_at: segment.created_at,
+        updated_at: segment.updated_at,
+      }));
+      
+      setSavedSegments(segments);
     } catch (error) {
       console.error("Error fetching segments:", error);
     }
@@ -112,7 +115,6 @@ const AdminUsersPage = () => {
     if (activeSegment) {
       const segment = savedSegments.find((s) => s.id === activeSegment);
       if (segment) {
-        // Apply segment filters - in real implementation, this would be more complex
         const filtered = users.filter((user) => {
           const criteria = segment.filter_criteria;
           return criteria.conditions.every((condition) => {
@@ -135,7 +137,7 @@ const AdminUsersPage = () => {
     // Apply filters
     if (filters.roles && filters.roles.length > 0) {
       result = result.filter((user) =>
-        user.roles.some((role) => filters.roles?.includes(role))
+        user.roles?.some((role) => filters.roles?.includes(role))
       );
     }
 
@@ -154,12 +156,6 @@ const AdminUsersPage = () => {
     if (filters.signup_source && filters.signup_source.length > 0) {
       result = result.filter((user) =>
         user.signup_source && filters.signup_source?.includes(user.signup_source)
-      );
-    }
-
-    if (filters.min_spend !== undefined) {
-      result = result.filter((user) =>
-        user.spend !== undefined && user.spend >= filters.min_spend!
       );
     }
 
@@ -184,20 +180,29 @@ const AdminUsersPage = () => {
 
   const handleSaveSegment = async (segment: Omit<SavedSegment, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // In a real implementation, this would save to Supabase
-      // const { data, error } = await supabase.from('saved_segments').insert({
-      //   ...segment,
-      //   created_by: auth.user().id,
-      // })
+      const { data, error } = await supabase
+        .from('saved_segments')
+        .insert({
+          name: segment.name,
+          description: segment.description,
+          filter_criteria: segment.filter_criteria,
+        })
+        .select()
+        .single();
 
+      if (error) throw error;
+      
       const newSegment: SavedSegment = {
-        ...segment,
-        id: `segment-${savedSegments.length + 1}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        filter_criteria: data.filter_criteria,
+        created_by: data.created_by,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
       };
       
-      setSavedSegments([...savedSegments, newSegment]);
+      setSavedSegments([newSegment, ...savedSegments]);
       toast.success("Segment saved successfully");
     } catch (error) {
       console.error("Error saving segment:", error);
@@ -206,8 +211,6 @@ const AdminUsersPage = () => {
   };
 
   const handleExportUsers = () => {
-    // In a real implementation, this would call a Supabase Edge Function
-    // to generate and download a CSV file
     const usersToExport = selectedUsers.length > 0
       ? filteredUsers.filter((user) => selectedUsers.includes(user.id))
       : filteredUsers;
@@ -217,38 +220,61 @@ const AdminUsersPage = () => {
       return;
     }
     
-    toast.success(`Exporting ${usersToExport.length} users...`);
-    // Mock export
-    setTimeout(() => {
-      toast.success("Users exported successfully");
-    }, 1500);
+    // Create CSV content
+    const headers = ['ID', 'Email', 'First Name', 'Last Name', 'Status', 'Company', 'Location', 'Created At'];
+    const csvContent = [
+      headers.join(','),
+      ...usersToExport.map(user => [
+        user.id,
+        user.email || '',
+        user.first_name || '',
+        user.last_name || '',
+        user.status || '',
+        user.company || '',
+        user.location || '',
+        user.created_at
+      ].map(field => `"${field}"`).join(','))
+    ].join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    toast.success(`Exported ${usersToExport.length} users successfully`);
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     if (selectedUsers.length === 0) {
       toast.error("No users selected");
       return;
     }
 
-    // In a real implementation, this would call a Supabase Edge Function
-    // to perform the bulk action
-    toast.success(`Performing ${action} on ${selectedUsers.length} users...`);
-    
-    // Mock action
-    setTimeout(() => {
-      if (action === "activate") {
-        setUsers(users.map(u => 
-          selectedUsers.includes(u.id) ? {...u, status: "active"} : u
-        ));
-        toast.success(`${selectedUsers.length} users activated`);
-      } else if (action === "deactivate") {
-        setUsers(users.map(u => 
-          selectedUsers.includes(u.id) ? {...u, status: "inactive"} : u
-        ));
-        toast.success(`${selectedUsers.length} users deactivated`);
+    try {
+      if (action === "activate" || action === "deactivate") {
+        const newStatus = action === "activate" ? "active" : "inactive";
+        
+        const { error } = await supabase
+          .from('profiles')
+          .update({ status: newStatus })
+          .in('id', selectedUsers);
+
+        if (error) throw error;
+
+        toast.success(`${selectedUsers.length} users ${action}d successfully`);
+        setSelectedUsers([]);
+        refetch();
       }
-      setSelectedUsers([]);
-    }, 1000);
+    } catch (error) {
+      console.error(`Error performing ${action}:`, error);
+      toast.error(`Failed to ${action} users`);
+    }
   };
 
   const handleActivateSegment = (segmentId: string) => {
