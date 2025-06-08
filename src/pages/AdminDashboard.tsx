@@ -1,10 +1,11 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, CartesianGrid, ResponsiveContainer } from "recharts";
-import { Users, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
+import { Users, ShoppingBag, Eye, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTitle } from "@/hooks/useTitle";
 
@@ -43,12 +44,12 @@ const AdminDashboard = () => {
 
   // Sample chart data - in a real app, this would come from your analytics
   const chartData = [
-    { name: 'Jan', users: 400, revenue: 2400 },
-    { name: 'Feb', users: 300, revenue: 1398 },
-    { name: 'Mar', users: 200, revenue: 9800 },
-    { name: 'Apr', users: 278, revenue: 3908 },
-    { name: 'May', users: 189, revenue: 4800 },
-    { name: 'Jun', users: 239, revenue: 3800 },
+    { name: 'Jan', users: 400, pageviews: 2400 },
+    { name: 'Feb', users: 300, pageviews: 1398 },
+    { name: 'Mar', users: 200, pageviews: 9800 },
+    { name: 'Apr', users: 278, pageviews: 3908 },
+    { name: 'May', users: 189, pageviews: 4800 },
+    { name: 'Jun', users: 239, pageviews: 3800 },
   ];
 
   const chartConfig = {
@@ -56,8 +57,8 @@ const AdminDashboard = () => {
       label: "Users",
       color: "hsl(var(--chart-1))",
     },
-    revenue: {
-      label: "Revenue",
+    pageviews: {
+      label: "Page Views",
       color: "hsl(var(--chart-2))",
     },
   };
@@ -70,14 +71,20 @@ const AdminDashboard = () => {
         return <TrendingUp className="h-4 w-4" />;
       case 'New Users':
         return <Users className="h-4 w-4" />;
-      case 'Total Revenue':
-        return <DollarSign className="h-4 w-4" />;
-      case 'Avg. Spend per User':
+      case 'Product Views':
+        return <Eye className="h-4 w-4" />;
+      case 'Featured Products':
         return <ShoppingBag className="h-4 w-4" />;
       default:
         return <TrendingUp className="h-4 w-4" />;
     }
   };
+
+  // Filter out money-related metrics and only show relevant ones for affiliate marketing
+  const filteredKpiData = kpiData.filter(kpi => 
+    !kpi.metric.toLowerCase().includes('revenue') && 
+    !kpi.metric.toLowerCase().includes('spend')
+  );
 
   if (isLoading) {
     return (
@@ -110,7 +117,7 @@ const AdminDashboard = () => {
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {kpiData.map((kpi) => (
+          {filteredKpiData.map((kpi) => (
             <Card key={kpi.metric}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -120,9 +127,7 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {kpi.metric.includes('Revenue') || kpi.metric.includes('Spend') 
-                    ? `$${kpi.value.toLocaleString()}` 
-                    : kpi.value.toLocaleString()}
+                  {kpi.value.toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Badge variant={kpi.change_percentage >= 0 ? "default" : "destructive"}>
@@ -155,8 +160,8 @@ const AdminDashboard = () => {
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="revenue" 
-                      stroke="var(--color-revenue)" 
+                      dataKey="pageviews" 
+                      stroke="var(--color-pageviews)" 
                       strokeWidth={2}
                       dot={false}
                     />
@@ -183,7 +188,7 @@ const AdminDashboard = () => {
                       </p>
                     </div>
                     <div className="ml-auto font-medium">
-                      ${user.spend || 0}
+                      {user.status || 'Active'}
                     </div>
                   </div>
                 ))}

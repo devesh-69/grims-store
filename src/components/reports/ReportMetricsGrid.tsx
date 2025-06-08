@@ -1,7 +1,7 @@
 
 import { KpiMetric } from "@/types/report";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDown, ArrowUp, Users, UserCheck, User, DollarSign, CreditCard } from "lucide-react";
+import { ArrowDown, ArrowUp, Users, UserCheck, User, Eye, ShoppingBag } from "lucide-react";
 
 interface ReportMetricsGridProps {
   metrics: KpiMetric[];
@@ -16,25 +16,17 @@ export function ReportMetricsGrid({ metrics }: ReportMetricsGridProps) {
         return <UserCheck className="h-5 w-5" />;
       case "New Users":
         return <User className="h-5 w-5" />;
-      case "Total Revenue":
-        return <DollarSign className="h-5 w-5" />;
-      case "Avg. Spend per User":
-        return <CreditCard className="h-5 w-5" />;
+      case "Product Views":
+        return <Eye className="h-5 w-5" />;
+      case "Featured Products":
+        return <ShoppingBag className="h-5 w-5" />;
       default:
-        return <DollarSign className="h-5 w-5" />;
+        return <Users className="h-5 w-5" />;
     }
   };
 
   const formatValue = (metric: KpiMetric) => {
-    if (metric.metric.toLowerCase().includes('revenue') || metric.metric.toLowerCase().includes('spend')) {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(metric.value);
-    }
-    
+    // All metrics are now simple numbers - no currency formatting needed
     return metric.value.toLocaleString();
   };
 
