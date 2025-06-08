@@ -63,7 +63,13 @@ const App = () => (
                 <ImportWishlistPage />
               </ProtectedRoute>
             } />
+            {/* Admin routes - redirect /admin to /admin/dashboard */}
             <Route path="/admin" element={
+              <ProtectedRoute>
+                <Navigate to="/admin/dashboard" replace />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/dashboard" element={
               <ProtectedRoute>
                 <AdminDashboard />
               </ProtectedRoute>

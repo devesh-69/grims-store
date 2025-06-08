@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,11 +8,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import Fuse from 'fuse.js';
-// import { products } from "@/data/products"; // Remove hardcoded products import
-import { useQuery } from "@tanstack/react-query"; // Import useQuery
-import { fetchProducts } from "@/api/products"; // Import fetchProducts API
+import { useQuery } from "@tanstack/react-query";
+import { fetchProducts } from "@/api/products";
 import { Product } from "@/types/product";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -71,13 +70,9 @@ const Navbar = () => {
     { name: "Blog", path: "/blog", icon: <BookOpen className="mr-2 h-4 w-4" /> }
   ];
 
-  // Assuming user object has isAdmin property based on previous context
-  // If isAdmin check needs to be based on roles from 'user_roles' table, this needs adjustment
-  // For now, keeping as is based on the provided context.
-  const isAdmin = (user as any)?.isAdmin; // Type assertion based on previous usage
-
-  if (user && isAdmin) {
-    navItems.push({ name: "Admin Dashboard", path: "/admin/dashboard", icon: <User className="mr-2 h-4 w-4" /> });
+  // Only show Admin Dashboard for users with admin privileges
+  if (user?.isAdmin) {
+    navItems.push({ name: "Admin Dashboard", path: "/admin", icon: <User className="mr-2 h-4 w-4" /> });
   }
 
   return (

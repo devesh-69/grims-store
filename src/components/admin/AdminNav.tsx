@@ -27,7 +27,7 @@ const AdminNav = () => {
   const navLinks = [
     {
       name: "Dashboard",
-      path: "/admin",
+      path: "/admin/dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
       exact: true,
     },
@@ -84,7 +84,7 @@ const AdminNav = () => {
             )}
           >
             {!isCollapsed && (
-              <Link to="/admin" className="font-semibold text-lg text-foreground">
+              <Link to="/admin/dashboard" className="font-semibold text-lg text-foreground">
                 Admin Panel
               </Link>
             )}
