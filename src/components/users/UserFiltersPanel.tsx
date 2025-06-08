@@ -20,7 +20,6 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
 import { Save, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -79,10 +78,6 @@ export function UserFiltersPanel({
     }
   };
 
-  const handleSpendChange = (value: number[]) => {
-    onFilterChange({ ...filters, min_spend: value[0] });
-  };
-
   const handleSaveSegment = () => {
     if (!segmentName) return;
     
@@ -118,14 +113,6 @@ export function UserFiltersPanel({
         field: "location",
         operator: "contains",
         value: filters.location,
-      });
-    }
-    
-    if (filters.min_spend !== undefined) {
-      conditions.push({
-        field: "spend",
-        operator: "greater_than",
-        value: filters.min_spend,
       });
     }
     
@@ -293,22 +280,6 @@ export function UserFiltersPanel({
             className="mt-1"
             value={filters.location || ""}
             onChange={(e) => onFilterChange({ ...filters, location: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <Label>Min. Spend</Label>
-            <span className="text-sm text-muted-foreground">
-              {filters.min_spend ? `$${filters.min_spend}+` : "Any"}
-            </span>
-          </div>
-          <Slider
-            defaultValue={[0]}
-            max={500}
-            step={10}
-            value={[filters.min_spend || 0]}
-            onValueChange={handleSpendChange}
           />
         </div>
       </div>

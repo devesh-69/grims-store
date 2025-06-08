@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTitle } from "@/hooks/useTitle";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -12,6 +13,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Filter, Save, Download, UserPlus, UsersRound, UserCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const AdminUsersPage = () => {
   useTitle("User Management | Admin");
@@ -21,6 +32,11 @@ const AdminUsersPage = () => {
   const [savedSegments, setSavedSegments] = useState<SavedSegment[]>([]);
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserFirstName, setNewUserFirstName] = useState("");
+  const [newUserLastName, setNewUserLastName] = useState("");
 
   // Fetch users from profiles table
   const { data: users = [], isLoading, refetch } = useQuery({
@@ -68,7 +84,6 @@ const AdminUsersPage = () => {
         updated_at: profile.updated_at,
         last_login: profile.last_login || undefined,
         roles: ['user'], // Default role, will be updated if we can fetch actual roles
-        spend: 0, // Removed spend tracking for affiliate marketing
         custom_attributes: (typeof profile.custom_attributes === 'object' && profile.custom_attributes !== null) 
           ? profile.custom_attributes as Record<string, any> 
           : {},
@@ -194,7 +209,7 @@ const AdminUsersPage = () => {
         id: data.id,
         name: data.name,
         description: data.description,
-        filter_criteria: data.filter_criteria as FilterCriteria,
+        filter_criteria: segment.filter_criteria,
         created_by: data.created_by,
         created_at: data.created_at,
         updated_at: data.updated_at,
@@ -280,6 +295,39 @@ const AdminUsersPage = () => {
     setFilters({});
   };
 
+  const handleAddUser = async () => {
+    if (!newUserEmail || !newUserPassword) {
+      toast.error("Email and password are required");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('api-admin-users/create-user', {
+        body: {
+          email: newUserEmail,
+          password: newUserPassword,
+          userData: {
+            first_name: newUserFirstName,
+            last_name: newUserLastName,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("User created successfully");
+      setAddUserDialogOpen(false);
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserFirstName("");
+      setNewUserLastName("");
+      refetch();
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      toast.error(`Failed to create user: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="container mx-auto p-4 space-y-6">
@@ -310,6 +358,7 @@ const AdminUsersPage = () => {
             </Button>
             <Button 
               variant="default"
+              onClick={() => setAddUserDialogOpen(true)}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <UserPlus className="mr-2 h-4 w-4" />
@@ -385,6 +434,71 @@ const AdminUsersPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Add User Dialog */}
+        <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>
+                Create a new user account with email and password.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="user@example.com"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Minimum 6 characters"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  placeholder="John"
+                  value={newUserFirstName}
+                  onChange={(e) => setNewUserFirstName(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  value={newUserLastName}
+                  onChange={(e) => setNewUserLastName(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddUser} disabled={!newUserEmail || !newUserPassword}>
+                Create User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

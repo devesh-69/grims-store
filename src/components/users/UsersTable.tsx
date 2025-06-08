@@ -48,8 +48,7 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers, onR
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const itemsPerPage = 10;
   
   // Calculate pagination
@@ -86,9 +85,6 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers, onR
   };
 
   const handleEditUser = (user: UserProfile) => {
-    setUserToEdit(user);
-    setEditDialogOpen(true);
-    // TODO: Implement edit user functionality
     console.log("Edit user:", user);
     toast.info("Edit user functionality coming soon");
   };
@@ -123,21 +119,31 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers, onR
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
 
+    setIsDeleting(true);
     try {
-      // Delete user from auth.users using the admin API
-      const { error } = await supabase.functions.invoke('api-admin-users/delete-user', {
+      console.log('Attempting to delete user:', userToDelete.id);
+      
+      // Delete user using the admin API
+      const { data, error } = await supabase.functions.invoke('api-admin-users/delete-user', {
         body: { userId: userToDelete.id }
       });
 
-      if (error) throw error;
+      console.log('Delete response:', { data, error });
+
+      if (error) {
+        console.error('Delete error:', error);
+        throw new Error(error.message || 'Failed to delete user');
+      }
 
       toast.success("User deleted successfully");
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       onRefresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting user:", error);
-      toast.error("Failed to delete user");
+      toast.error(`Failed to delete user: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -304,7 +310,7 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers, onR
                           setUserToDelete(user);
                           setDeleteDialogOpen(true);
                         }}
-                        className="text-red-600 focus:text-red-600"
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Delete User
                       </DropdownMenuItem>
@@ -361,12 +367,13 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers, onR
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteUser}
+              disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Delete User
+              {isDeleting ? "Deleting..." : "Delete User"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

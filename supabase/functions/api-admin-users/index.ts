@@ -68,7 +68,17 @@ serve(async (req) => {
 
     // Parse request
     const url = new URL(req.url);
-    const action = url.pathname.split('/').pop();
+    const pathname = url.pathname;
+    let action = '';
+    
+    // Extract action from pathname
+    if (pathname.includes('get-users-with-emails')) {
+      action = 'get-users-with-emails';
+    } else if (pathname.includes('create-user')) {
+      action = 'create-user';
+    } else if (pathname.includes('delete-user')) {
+      action = 'delete-user';
+    }
 
     // Handle getting users with emails using admin service role
     const adminClient = createClient(
@@ -105,15 +115,22 @@ serve(async (req) => {
       );
     }
 
-    // Handle other admin user actions
+    // Handle creating a new user
     if (action === 'create-user') {
       const { email, password, userData } = await req.json();
       
+      if (!email || !password) {
+        return new Response(
+          JSON.stringify({ error: 'Email and password are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const { data, error } = await adminClient.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
-        user_metadata: userData
+        user_metadata: userData || {}
       });
 
       if (error) {
@@ -129,6 +146,7 @@ serve(async (req) => {
       );
     }
 
+    // Handle deleting a user
     if (action === 'delete-user') {
       const { userId } = await req.json();
       
@@ -138,6 +156,8 @@ serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      console.log('Attempting to delete user:', userId);
 
       // First delete from profiles table (cascade will handle related records)
       const { error: profileError } = await adminClient
@@ -154,11 +174,14 @@ serve(async (req) => {
       const { error } = await adminClient.auth.admin.deleteUser(userId);
 
       if (error) {
+        console.error('Error deleting user from auth:', error);
         return new Response(
           JSON.stringify({ error: error.message }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      console.log('User deleted successfully:', userId);
 
       return new Response(
         JSON.stringify({ success: true, message: 'User deleted successfully' }),
