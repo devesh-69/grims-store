@@ -132,6 +132,25 @@ serve(async (req) => {
     if (action === 'delete-user') {
       const { userId } = await req.json();
       
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'User ID is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // First delete from profiles table (cascade will handle related records)
+      const { error: profileError } = await adminClient
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        // Continue with auth deletion even if profile deletion fails
+      }
+
+      // Then delete from auth.users
       const { error } = await adminClient.auth.admin.deleteUser(userId);
 
       if (error) {
@@ -142,7 +161,7 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ success: true, message: 'User deleted successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -153,6 +172,7 @@ serve(async (req) => {
     );
     
   } catch (error) {
+    console.error('Error in admin-users function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

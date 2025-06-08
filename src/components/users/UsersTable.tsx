@@ -16,22 +16,40 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatDistanceToNow } from "date-fns";
-import { MoreHorizontal, Mail, Edit, UserX, UserCheck } from "lucide-react";
+import { MoreHorizontal, Mail, Edit, UserX, UserCheck, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UsersTableProps {
   users: UserProfile[];
   isLoading: boolean;
   selectedUsers: string[];
   onSelectUsers: (selectedUsers: string[]) => void;
+  onRefresh: () => void;
 }
 
-export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers }: UsersTableProps) {
+export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers, onRefresh }: UsersTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
   const itemsPerPage = 10;
   
   // Calculate pagination
@@ -64,6 +82,62 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers }: U
   const handleNext = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleEditUser = (user: UserProfile) => {
+    setUserToEdit(user);
+    setEditDialogOpen(true);
+    // TODO: Implement edit user functionality
+    console.log("Edit user:", user);
+    toast.info("Edit user functionality coming soon");
+  };
+
+  const handleEmailUser = (user: UserProfile) => {
+    if (user.email && user.email !== 'Email not available') {
+      window.location.href = `mailto:${user.email}`;
+    } else {
+      toast.error("Email not available for this user");
+    }
+  };
+
+  const handleToggleUserStatus = async (user: UserProfile) => {
+    try {
+      const newStatus = user.status === "active" ? "inactive" : "active";
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success(`User ${newStatus === "active" ? "activated" : "deactivated"} successfully`);
+      onRefresh();
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      toast.error("Failed to update user status");
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      // Delete user from auth.users using the admin API
+      const { error } = await supabase.functions.invoke('api-admin-users/delete-user', {
+        body: { userId: userToDelete.id }
+      });
+
+      if (error) throw error;
+
+      toast.success("User deleted successfully");
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      onRefresh();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Failed to delete user");
     }
   };
 
@@ -184,7 +258,7 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers }: U
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <div className="flex flex-col gap-1">
-                    {user.roles.map((role) => (
+                    {user.roles?.map((role) => (
                       <div key={role}>{renderRoleBadge(role)}</div>
                     ))}
                   </div>
@@ -209,21 +283,31 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers }: U
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditUser(user)}>
                         <Edit className="mr-2 h-4 w-4" /> Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEmailUser(user)}>
                         <Mail className="mr-2 h-4 w-4" /> Email
                       </DropdownMenuItem>
                       {user.status === "active" ? (
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleUserStatus(user)}>
                           <UserX className="mr-2 h-4 w-4" /> Deactivate
                         </DropdownMenuItem>
                       ) : (
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleUserStatus(user)}>
                           <UserCheck className="mr-2 h-4 w-4" /> Activate
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setUserToDelete(user);
+                          setDeleteDialogOpen(true);
+                        }}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -265,6 +349,28 @@ export function UsersTable({ users, isLoading, selectedUsers, onSelectUsers }: U
           </Pagination>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {userToDelete?.first_name} {userToDelete?.last_name}? 
+              This action cannot be undone and will permanently remove the user from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteUser}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

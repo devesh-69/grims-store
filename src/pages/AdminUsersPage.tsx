@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useTitle } from "@/hooks/useTitle";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { UserProfile, UserFilters, SavedSegment } from "@/types/user";
+import { UserProfile, UserFilters, SavedSegment, FilterCriteria } from "@/types/user";
 import { UsersTable } from "@/components/users/UsersTable";
 import { UserFiltersPanel } from "@/components/users/UserFiltersPanel";
 import { Button } from "@/components/ui/button";
@@ -69,8 +68,10 @@ const AdminUsersPage = () => {
         updated_at: profile.updated_at,
         last_login: profile.last_login || undefined,
         roles: ['user'], // Default role, will be updated if we can fetch actual roles
-        spend: profile.spend || 0,
-        custom_attributes: profile.custom_attributes || {},
+        spend: 0, // Removed spend tracking for affiliate marketing
+        custom_attributes: (typeof profile.custom_attributes === 'object' && profile.custom_attributes !== null) 
+          ? profile.custom_attributes as Record<string, any> 
+          : {},
         referral_code: profile.referral_code || '',
       }));
 
@@ -99,7 +100,7 @@ const AdminUsersPage = () => {
         id: segment.id,
         name: segment.name,
         description: segment.description,
-        filter_criteria: segment.filter_criteria,
+        filter_criteria: segment.filter_criteria as FilterCriteria,
         created_by: segment.created_by,
         created_at: segment.created_at,
         updated_at: segment.updated_at,
@@ -118,9 +119,6 @@ const AdminUsersPage = () => {
         const filtered = users.filter((user) => {
           const criteria = segment.filter_criteria;
           return criteria.conditions.every((condition) => {
-            if (condition.field === "spend" && condition.operator === "greater_than") {
-              return user.spend && user.spend > (condition.value as number);
-            }
             if (condition.field === "status" && condition.operator === "equals") {
               return user.status === condition.value;
             }
@@ -185,7 +183,7 @@ const AdminUsersPage = () => {
         .insert({
           name: segment.name,
           description: segment.description,
-          filter_criteria: segment.filter_criteria,
+          filter_criteria: segment.filter_criteria as any,
         })
         .select()
         .single();
@@ -196,7 +194,7 @@ const AdminUsersPage = () => {
         id: data.id,
         name: data.name,
         description: data.description,
-        filter_criteria: data.filter_criteria,
+        filter_criteria: data.filter_criteria as FilterCriteria,
         created_by: data.created_by,
         created_at: data.created_at,
         updated_at: data.updated_at,
@@ -382,6 +380,7 @@ const AdminUsersPage = () => {
                 isLoading={isLoading}
                 selectedUsers={selectedUsers}
                 onSelectUsers={setSelectedUsers}
+                onRefresh={refetch}
               />
             </div>
           </div>
