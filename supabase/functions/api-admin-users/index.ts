@@ -70,14 +70,27 @@ serve(async (req) => {
     const url = new URL(req.url);
     const pathname = url.pathname;
     let action = '';
+    let requestBody: any = {};
     
-    // Extract action from pathname
-    if (pathname.includes('get-users-with-emails')) {
-      action = 'get-users-with-emails';
-    } else if (pathname.includes('create-user')) {
-      action = 'create-user';
-    } else if (pathname.includes('delete-user')) {
-      action = 'delete-user';
+    // Get action from request body or pathname
+    try {
+      if (req.method === 'POST') {
+        requestBody = await req.json();
+        action = requestBody.action || '';
+      }
+    } catch {
+      // Fallback to pathname extraction if body parsing fails
+    }
+    
+    // Extract action from pathname if not in body
+    if (!action) {
+      if (pathname.includes('get-users-with-emails')) {
+        action = 'get-users-with-emails';
+      } else if (pathname.includes('create-user')) {
+        action = 'create-user';
+      } else if (pathname.includes('delete-user')) {
+        action = 'delete-user';
+      }
     }
 
     // Handle getting users with emails using admin service role
@@ -117,7 +130,7 @@ serve(async (req) => {
 
     // Handle creating a new user
     if (action === 'create-user') {
-      const { email, password, userData } = await req.json();
+      const { email, password, userData } = requestBody.email ? requestBody : await req.json();
       
       if (!email || !password) {
         return new Response(
@@ -148,7 +161,7 @@ serve(async (req) => {
 
     // Handle deleting a user
     if (action === 'delete-user') {
-      const { userId } = await req.json();
+      const { userId } = requestBody.userId ? requestBody : await req.json();
       
       if (!userId) {
         return new Response(

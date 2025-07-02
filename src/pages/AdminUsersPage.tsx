@@ -111,15 +111,29 @@ const AdminUsersPage = () => {
       
       if (error) throw error;
       
-      const segments: SavedSegment[] = data.map(segment => ({
-        id: segment.id,
-        name: segment.name,
-        description: segment.description,
-        filter_criteria: segment.filter_criteria as FilterCriteria,
-        created_by: segment.created_by,
-        created_at: segment.created_at,
-        updated_at: segment.updated_at,
-      }));
+      const segments: SavedSegment[] = data.map(segment => {
+        // Safely parse filter_criteria with fallback
+        let filterCriteria: FilterCriteria;
+        try {
+          if (typeof segment.filter_criteria === 'object' && segment.filter_criteria !== null && !Array.isArray(segment.filter_criteria)) {
+            filterCriteria = segment.filter_criteria as unknown as FilterCriteria;
+          } else {
+            filterCriteria = { conditions: [], conjunction: 'and' };
+          }
+        } catch {
+          filterCriteria = { conditions: [], conjunction: 'and' };
+        }
+
+        return {
+          id: segment.id,
+          name: segment.name,
+          description: segment.description,
+          filter_criteria: filterCriteria,
+          created_by: segment.created_by,
+          created_at: segment.created_at,
+          updated_at: segment.updated_at,
+        };
+      });
       
       setSavedSegments(segments);
     } catch (error) {
