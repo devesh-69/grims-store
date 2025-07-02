@@ -43,46 +43,76 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="container relative grid min-h-screen place-items-center">
-      <Card className="w-[350px]">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Login</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              placeholder="Enter your email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              placeholder="Enter your password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <Button onClick={handleSubmit} disabled={loginMutation.isPending}>
-            {loginMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Logging in ...
-              </>
-            ) : (
-              "Login"
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-      <div className="absolute bottom-4 text-center text-sm text-muted-foreground">
-        Don't have an account? <a href="/register" className="text-primary">Register</a>
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="shadow-2xl border-border/50 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-3xl text-center bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Welcome Back
+            </CardTitle>
+            <p className="text-center text-muted-foreground">
+              Sign in to your account to continue
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  placeholder="Enter your email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11 bg-background border-border focus:border-primary transition-colors"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  placeholder="Enter your password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11 bg-background border-border focus:border-primary transition-colors"
+                  required
+                />
+              </div>
+              <Button 
+                type="submit" 
+                disabled={loginMutation.isPending || !email || !password}
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 transform hover:scale-[1.02]"
+              >
+                {loginMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+        
+        <div className="mt-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <a 
+              href="/register" 
+              className="text-primary hover:text-primary/80 font-medium hover:underline transition-colors"
+            >
+              Create one here
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

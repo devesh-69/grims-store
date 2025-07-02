@@ -49,11 +49,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setupUser = async (currentSession: Session | null) => {
     if (currentSession?.user) {
-      // Check if the user is an admin based on their email
-      const isAdmin = ADMIN_EMAILS.includes(currentSession.user.email || '');
-      
       // Fetch user roles from database
       const roles = await fetchUserRoles(currentSession.user.id);
+      
+      // Check if user has admin role in database OR is in admin emails list (fallback)
+      const hasAdminRole = roles.includes('admin');
+      const isEmailAdmin = ADMIN_EMAILS.includes(currentSession.user.email || '');
+      const isAdmin = hasAdminRole || isEmailAdmin;
       
       const userWithRole: User = {
         ...currentSession.user,
@@ -140,10 +142,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
       setLoading(true);
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             first_name: firstName,
             last_name: lastName
