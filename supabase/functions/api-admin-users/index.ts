@@ -143,7 +143,10 @@ serve(async (req) => {
         email,
         password,
         email_confirm: true,
-        user_metadata: userData || {}
+        user_metadata: {
+          first_name: userData?.first_name || '',
+          last_name: userData?.last_name || ''
+        }
       });
 
       if (error) {
@@ -153,8 +156,11 @@ serve(async (req) => {
         );
       }
 
+      // The trigger will automatically create the profile
+      console.log('User created successfully:', data.user?.id);
+
       return new Response(
-        JSON.stringify(data),
+        JSON.stringify({ user: data.user, message: 'User created successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

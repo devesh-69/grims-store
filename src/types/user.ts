@@ -85,6 +85,5 @@ export interface UserFilters {
   created_before?: string;
   last_active_after?: string;
   search?: string;
-  min_spend?: number;
   has_completed_profile?: boolean;
 }
