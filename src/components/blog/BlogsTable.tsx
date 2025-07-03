@@ -125,7 +125,7 @@ export function BlogsTable({ blogs, onEdit, onDelete, onView }: BlogsTableProps)
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">
-                    {blog.category || "Uncategorized"}
+                    {Array.isArray(blog.category) ? blog.category.join(", ") : (blog.category || "Uncategorized")}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">
                     <div className="flex items-center space-x-2">

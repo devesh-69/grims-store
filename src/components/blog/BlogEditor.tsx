@@ -143,7 +143,7 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
         date: data.date ? format(data.date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         author: {
           id: user?.id || blog?.author.id || "anonymous",
-          name: `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || user?.email?.split('@')[0] || blog?.author.name || "Anonymous",
+          name: user?.email?.split('@')[0] || blog?.author.name || "Anonymous",
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || blog?.author.id || "anonymous"}`,
         },
         status: data.status,
@@ -541,7 +541,7 @@ Summarize the key takeaways from this post.`;
             </TabsContent>
             
             <TabsContent value="social" className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="bg-secondary/50 p-4 rounded-lg mb-6">
                 <h3 className="font-medium">Social Media Preview</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Customize how your post appears when shared on social media.
@@ -649,7 +649,7 @@ Summarize the key takeaways from this post.`;
                 <div className="border rounded-lg p-4">
                   <div className="max-w-md mx-auto">
                     <div className="border rounded-md overflow-hidden">
-                      <div className="aspect-[1.91/1] bg-gray-100">
+                      <div className="aspect-[1.91/1] bg-muted/50">
                         {coverImagePreview ? (
                           <img
                             src={coverImagePreview}
@@ -659,18 +659,18 @@ Summarize the key takeaways from this post.`;
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Image className="h-10 w-10 text-gray-300" />
+                            <Image className="h-10 w-10 text-muted-foreground" />
                           </div>
                         )}
                       </div>
-                      <div className="p-3 bg-gray-50">
+                      <div className="p-3 bg-secondary/30">
                         <p className="font-medium text-blue-600 truncate">
                           {window.location.host}
                         </p>
                         <h4 className="font-bold truncate mt-1">
                           {form.watch("ogTitle") || form.watch("title") || "Your post title here"}
                         </h4>
-                        <p className="text-gray-500 text-sm line-clamp-2 mt-1">
+                        <p className="text-muted-foreground text-sm line-clamp-2 mt-1">
                           {form.watch("ogDescription") || form.watch("metaDescription") || form.watch("excerpt") || "Your post description will appear here. Make sure to write a compelling description."}
                         </p>
                       </div>
@@ -681,7 +681,7 @@ Summarize the key takeaways from this post.`;
             </TabsContent>
             
             <TabsContent value="settings" className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="bg-secondary/50 p-4 rounded-lg mb-6">
                 <h3 className="font-medium">Additional Settings</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Configure additional settings for your blog post.
