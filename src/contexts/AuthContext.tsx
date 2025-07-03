@@ -20,7 +20,7 @@ interface AuthContextProps {
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 // List of admin emails - in a real-world scenario, this would be stored in and checked against the database
-const ADMIN_EMAILS = ['admin@example.com', 'tatkaredevesh69@gmail.com'];
+const ADMIN_EMAILS = ['admin@example.com', 'tatkaredevesh69@gmail.com', 'admin@blogapp.com'];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
