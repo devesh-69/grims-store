@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTitle } from "@/hooks/useTitle";
 import { FeatureFlagsManager } from "@/components/admin/FeatureFlags";
 import { RoleManager } from "@/components/admin/RoleManager";
+import { SystemReset } from "@/components/admin/SystemReset";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shield, Table } from "lucide-react";
 import {
@@ -114,6 +115,8 @@ const AdminSecurityPage = () => {
             Manage user roles, feature flags and security settings
           </p>
         </div>
+
+        <SystemReset />
 
         <Tabs defaultValue="roles" className="w-full">
           <TabsList className="grid w-full md:w-[400px] grid-cols-2">
