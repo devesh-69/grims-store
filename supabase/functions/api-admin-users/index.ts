@@ -7,285 +7,260 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Utility functions
+function createSupabaseClient(authHeader: string) {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    }
+  );
+}
+
+function createAdminClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
+}
+
+function extractAction(req: Request, requestBody: any): string {
+  const url = new URL(req.url);
+  const pathname = url.pathname;
+  
+  if (requestBody.action) return requestBody.action;
+  
+  if (pathname.includes('get-users-with-emails')) return 'get-users-with-emails';
+  if (pathname.includes('create-user')) return 'create-user';
+  if (pathname.includes('delete-all-users')) return 'delete-all-users';
+  if (pathname.includes('delete-user')) return 'delete-user';
+  
+  return '';
+}
+
+function createErrorResponse(error: string, status: number = 400) {
+  return new Response(
+    JSON.stringify({ error }),
+    { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+function createSuccessResponse(data: any) {
+  return new Response(
+    JSON.stringify(data),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function checkAdminRole(supabaseClient: any, userId: string): Promise<boolean> {
+  const { data: roleData, error: roleError } = await supabaseClient
+    .from('user_roles')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('role', 'admin');
+
+  return !roleError && roleData && roleData.length > 0;
+}
+
+// Action handlers
+async function handleGetUsersWithEmails(adminClient: any) {
+  const { data: users, error } = await adminClient.auth.admin.listUsers();
+  
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const usersData = users.users.map((u: any) => ({
+    id: u.id,
+    email: u.email,
+    created_at: u.created_at,
+  }));
+
+  return usersData;
+}
+
+async function handleCreateUser(adminClient: any, requestBody: any) {
+  const { email, password, userData } = requestBody;
+  
+  if (!email || !password) {
+    throw new Error('Email and password are required');
+  }
+
+  const { data, error } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      first_name: userData?.first_name || '',
+      last_name: userData?.last_name || ''
+    }
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  console.log('User created successfully:', data.user?.id);
+
+  // If this is the admin user, assign admin role
+  if (email === 'tatkaredevesh69@gmail.com' && data.user?.id) {
+    try {
+      await adminClient
+        .from('user_roles')
+        .insert({
+          user_id: data.user.id,
+          role: 'admin'
+        });
+      console.log('Admin role assigned to user:', data.user.id);
+    } catch (roleError) {
+      console.error('Error assigning admin role:', roleError);
+    }
+  }
+
+  return { user: data.user, message: 'User created successfully' };
+}
+
+async function handleDeleteAllUsers(adminClient: any) {
+  console.log('Attempting to delete all users');
+
+  const { data: users, error: listError } = await adminClient.auth.admin.listUsers();
+  
+  if (listError) {
+    throw new Error(listError.message);
+  }
+
+  const deletePromises = users.users.map(async (user: any) => {
+    const { error } = await adminClient.auth.admin.deleteUser(user.id);
+    if (error) {
+      console.error(`Error deleting user ${user.id}:`, error);
+    }
+    return { userId: user.id, error };
+  });
+
+  const results = await Promise.all(deletePromises);
+  const successCount = results.filter(r => !r.error).length;
+  
+  console.log(`Deleted ${successCount} users successfully`);
+
+  return { 
+    success: true, 
+    message: `Deleted ${successCount} users successfully`,
+    results 
+  };
+}
+
+async function handleDeleteUser(adminClient: any, requestBody: any) {
+  const { userId } = requestBody;
+  
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
+  console.log('Attempting to delete user:', userId);
+
+  // First delete from profiles table (cascade will handle related records)
+  const { error: profileError } = await adminClient
+    .from('profiles')
+    .delete()
+    .eq('id', userId);
+
+  if (profileError) {
+    console.error('Error deleting profile:', profileError);
+  }
+
+  // Then delete from auth.users
+  const { error } = await adminClient.auth.admin.deleteUser(userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  console.log('User deleted successfully:', userId);
+  return { success: true, message: 'User deleted successfully' };
+}
+
+// Main handler
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization');
     
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authorization header is required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return createErrorResponse('Authorization header is required', 401);
     }
 
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-          detectSessionInUrl: false,
-        },
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
-
-    // Verify the user has admin role
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
+    const supabaseClient = createSupabaseClient(authHeader);
+    const { data: { user } } = await supabaseClient.auth.getUser();
 
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return createErrorResponse('Unauthorized', 401);
     }
 
-    // Parse request first to determine if it's a system operation
-    const url = new URL(req.url);
-    const pathname = url.pathname;
-    let action = '';
     let requestBody: any = {};
-    
-    // Get action from request body or pathname
     try {
       if (req.method === 'POST') {
         requestBody = await req.json();
-        action = requestBody.action || '';
       }
     } catch {
-      // Fallback to pathname extraction if body parsing fails
+      // Ignore parsing errors
     }
     
-    // Extract action from pathname if not in body
-    if (!action) {
-      if (pathname.includes('get-users-with-emails')) {
-        action = 'get-users-with-emails';
-      } else if (pathname.includes('create-user')) {
-        action = 'create-user';
-      } else if (pathname.includes('delete-all-users')) {
-        action = 'delete-all-users';
-      } else if (pathname.includes('delete-user')) {
-        action = 'delete-user';
-      }
-    }
-
-    // Check if user has admin role (skip for delete-all-users and initial user creation)
+    const action = extractAction(req, requestBody);
+    
+    // Check if it's a system operation that bypasses admin check
     const isSystemOperation = action === 'delete-all-users' || 
       (action === 'create-user' && requestBody.email === 'tatkaredevesh69@gmail.com');
     
     if (!isSystemOperation) {
-      const { data: roleData, error: roleError } = await supabaseClient
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('role', 'admin');
-
-      if (roleError || !roleData || roleData.length === 0) {
-        return new Response(
-          JSON.stringify({ error: 'Admin access required' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      const hasAdmin = await checkAdminRole(supabaseClient, user.id);
+      if (!hasAdmin) {
+        return createErrorResponse('Admin access required', 403);
       }
     }
 
-    // Handle getting users with emails using admin service role
-    const adminClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const adminClient = createAdminClient();
 
-    if (action === 'get-users-with-emails') {
-      const { data: users, error } = await adminClient.auth.admin.listUsers();
-      
-      if (error) {
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Map only needed user data to avoid exposing sensitive info
-      const usersData = users.users.map(u => ({
-        id: u.id,
-        email: u.email,
-        created_at: u.created_at,
-      }));
-
-      return new Response(
-        JSON.stringify(usersData),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Handle creating a new user
-    if (action === 'create-user') {
-      const { email, password, userData } = requestBody;
-      
-      if (!email || !password) {
-        return new Response(
-          JSON.stringify({ error: 'Email and password are required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const { data, error } = await adminClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          first_name: userData?.first_name || '',
-          last_name: userData?.last_name || ''
-        }
-      });
-
-      if (error) {
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // The trigger will automatically create the profile
-      console.log('User created successfully:', data.user?.id);
-
-      // If this is the admin user, assign admin role
-      if (email === 'tatkaredevesh69@gmail.com' && data.user?.id) {
-        try {
-          await adminClient
-            .from('user_roles')
-            .insert({
-              user_id: data.user.id,
-              role: 'admin'
-            });
-          console.log('Admin role assigned to user:', data.user.id);
-        } catch (roleError) {
-          console.error('Error assigning admin role:', roleError);
-        }
-      }
-
-      return new Response(
-        JSON.stringify({ user: data.user, message: 'User created successfully' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Handle deleting all users
-    if (action === 'delete-all-users') {
-      try {
-        console.log('Attempting to delete all users');
-
-        // Get all users first
-        const { data: users, error: listError } = await adminClient.auth.admin.listUsers();
+    // Route to appropriate handler
+    switch (action) {
+      case 'get-users-with-emails':
+        const users = await handleGetUsersWithEmails(adminClient);
+        return createSuccessResponse(users);
         
-        if (listError) {
-          return new Response(
-            JSON.stringify({ error: listError.message }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        // Delete each user
-        const deletePromises = users.users.map(async (user) => {
-          const { error } = await adminClient.auth.admin.deleteUser(user.id);
-          if (error) {
-            console.error(`Error deleting user ${user.id}:`, error);
-          }
-          return { userId: user.id, error };
-        });
-
-        const results = await Promise.all(deletePromises);
-        const successCount = results.filter(r => !r.error).length;
+      case 'create-user':
+        const createResult = await handleCreateUser(adminClient, requestBody);
+        return createSuccessResponse(createResult);
         
-        console.log(`Deleted ${successCount} users successfully`);
-
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            message: `Deleted ${successCount} users successfully`,
-            results 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } catch (error: any) {
-        console.error('Error deleting all users:', error);
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      case 'delete-all-users':
+        const deleteAllResult = await handleDeleteAllUsers(adminClient);
+        return createSuccessResponse(deleteAllResult);
+        
+      case 'delete-user':
+        const deleteResult = await handleDeleteUser(adminClient, requestBody);
+        return createSuccessResponse(deleteResult);
+        
+      default:
+        return createErrorResponse('Unknown action');
     }
-
-    // Handle deleting a user
-    if (action === 'delete-user') {
-      const { userId } = requestBody;
-      
-      if (!userId) {
-        return new Response(
-          JSON.stringify({ error: 'User ID is required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log('Attempting to delete user:', userId);
-
-      // First delete from profiles table (cascade will handle related records)
-      const { error: profileError } = await adminClient
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (profileError) {
-        console.error('Error deleting profile:', profileError);
-        // Continue with auth deletion even if profile deletion fails
-      }
-
-      // Then delete from auth.users
-      const { error } = await adminClient.auth.admin.deleteUser(userId);
-
-      if (error) {
-        console.error('Error deleting user from auth:', error);
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log('User deleted successfully:', userId);
-
-      return new Response(
-        JSON.stringify({ success: true, message: 'User deleted successfully' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({ error: 'Unknown action' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in admin-users function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse(error.message, 500);
   }
 });
